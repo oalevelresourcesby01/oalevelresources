@@ -1,0 +1,61 @@
+Continue exactly from the current project state.
+
+Do NOT restart the project.
+Do NOT regenerate completed files.
+Do NOT redesign any UI.
+
+First inspect the entire repository, including system-overview.md, and determine the current implementation state before making any changes.
+
+The previous AI already completed most of the production system:
+
+- Native Android app (Kotlin + Jetpack Compose + Material 3)
+- Node.js + TypeScript backend
+- React + TypeScript Admin Dashboard
+- Google Drive CMS
+- JWT Authentication
+- SQLite
+- OpenRouter AI proxy
+- Folder Generator
+- Drive Sync
+- Native PDF architecture
+- API layer
+- Render deployment configuration
+- GitHub-ready structure
+
+The previous session stopped ONLY because the Replit monthly usage limit was reached.
+
+The last unfinished work was:
+
+1. Fix the admin login bug caused by the fetch interceptor stripping Content-Type when injecting stale JWT tokens.
+2. Complete the password visibility (eye toggle) on every password/secret field including:
+   - Login
+   - Admin password
+   - Google Drive API Key
+   - OpenRouter API Key
+   - Any future secret fields
+3. Verify authentication end-to-end.
+4. Run a complete verification of backend, admin dashboard, and Android project.
+5. Fix every remaining TypeScript/build/runtime issue.
+6. Ensure production-ready builds.
+7. Produce a final verification report.
+
+Additionally:
+
+8. Inspect the Replit workflows and Preview configuration.
+   - Currently the Preview dropdown only shows the Admin Website.
+   - Determine why there is no option to test the Android application.
+   - If technically possible within Replit, configure a separate workflow or preview entry for the Android application.
+   - If Android cannot be executed directly inside Replit due to platform limitations, explain the exact reason and configure the project so that Android can still be built and tested using the appropriate tools (Android Studio/Gradle) without affecting the backend or admin workflows.
+   - Ensure the repository structure clearly separates:
+     • Android App
+     • Backend API
+     • Admin Website
+   - Verify every workflow and document how each component should be started and tested.
+
+Inspect first.
+
+Continue only from the current implementation state.
+
+Do not recreate completed work.
+
+Do not assume anything. Inspect the repository before making changes.

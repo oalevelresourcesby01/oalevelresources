@@ -1,0 +1,116 @@
+====================================================
+AI KNOWLEDGE SYSTEM (PRIMARY EDUCATIONAL AI)
+
+The AI inside the Android application must be a complete educational assistant, not just a general AI chatbot.
+
+====================================================
+AI SCREEN
+
+The AI chat screen must include:
+
+• Text Chat
+• Upload Image button
+• Upload PDF/Document button
+• Camera button
+• Paste Text
+• New Chat
+• Chat History
+• Clear Conversation
+
+Students must be able to:
+
+• Ask questions
+• Upload images of MCQs, diagrams or handwritten work
+• Upload PDFs
+• Upload notes
+• Upload question papers
+• Upload mark schemes
+• Upload any supported educational document
+
+====================================================
+KNOWLEDGE PRIORITY
+
+The AI must answer using the following priority order.
+
+PRIMARY SOURCE (Highest Priority)
+
+• Indexed Google Drive Resources
+• Notes
+• Books
+• Save My Exams
+• Topical Papers
+• Past Papers
+• Mark Schemes
+• Examiner Reports
+• Any educational resources available inside the application's Google Drive CMS
+
+SECONDARY SOURCE
+
+If the required information cannot be found inside the indexed educational resources, only then use:
+
+• OpenRouter AI
+• General AI knowledge
+• External knowledge
+
+The AI must always prioritize local educational resources before using any general AI knowledge.
+
+====================================================
+RESOURCE SEARCH
+
+Before generating every answer, the backend must automatically search the indexed Google Drive resources.
+
+The search must work across:
+
+• Notes
+• Books
+• Topicals
+• Past Papers
+• Mark Schemes
+• Examiner Reports
+• Save My Exams
+• All folders and subfolders
+
+If relevant resources exist, they must be used as the primary source for the answer.
+
+====================================================
+RELATED RESOURCES
+
+Every AI response should display a "Related Resources" section whenever matching resources are found.
+
+Example:
+
+Related Resources
+
+• Physics Notes Chapter 6
+• Save My Exams - Electricity
+• 2024 May June Paper 4
+• Mark Scheme
+• Examiner Report
+
+Students must be able to open any suggested resource directly from the AI response.
+
+====================================================
+ADMIN AI KNOWLEDGE MANAGER
+
+The Admin Website must include an AI Knowledge Manager with:
+
+• Rebuild Knowledge Index
+• Index Newly Added PDFs
+• Remove Deleted Resources
+• View Indexed Resources
+• AI Search Logs
+• Last Indexed Time
+• Total Indexed Files
+
+====================================================
+AI TRAINING
+
+The Admin must be able to define permanent AI instructions.
+
+Default behaviour:
+
+- Always search the application's educational resources first.
+- Use Google Drive indexed resources as the primary source.
+- Use OpenRouter/general AI knowledge only when local resources are unavailable.
+- Recommend related educational resources whenever possible.
+- Never ignore relevant local resources.

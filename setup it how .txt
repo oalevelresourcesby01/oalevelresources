@@ -1,0 +1,112 @@
+?? Android App — All 8 Screens
+The card above shows every screen your students will see. Here's the summary:
+
+Screen	What students do there
+Splash	App loading screen with logo
+Home	Announcements, level cards (O/A/IGCSE), WhatsApp link, quick actions
+Browse	Tap through folders: Level ? Subject ? Topic ? PDF
+Search	Type any word — finds PDFs and folders instantly
+AI Chat	Ask study questions — AI reads your PDFs first before answering
+PDF Viewer	Read PDFs in-app, night mode, mark favourite, download, track progress
+Downloads	All offline PDFs, works without internet
+Settings	Dark mode, cache clear, app version, contact
+Colour scheme: Forest green #1B5E20 (Material 3, matches your branding)
+
+?? Part 1 — Building the APK in Android Studio
+Upload this single folder to Android Studio:
+
+android/          ? open THIS folder as the project root
+
+That's it. Everything Android needs is inside it:
+
+android/
++-- app/
+¦   +-- build.gradle.kts        ? app config, your server URL is here
+¦   +-- proguard-rules.pro
+¦   +-- src/main/
+¦       +-- AndroidManifest.xml
+¦       +-- java/com/oalevel/resources/   ? all Kotlin code
+¦       +-- res/                          ? icons, themes, strings
++-- build.gradle.kts            ? project-level build
++-- gradle/libs.versions.toml   ? all library versions
++-- settings.gradle.kts
+
+Before building, do one thing — set your server URL:
+
+Open android/app/build.gradle.kts and update this line:
+
+buildConfigField("String", "BASE_URL", "\"https://your-render-app.onrender.com/api/\"")
+
+Replace your-render-app with your actual Render app name.
+
+Steps in Android Studio:
+
+File ? Open ? select the android/ folder
+Wait for Gradle sync to finish (downloads libraries, ~2–5 min first time)
+Build ? Generate Signed APK
+Create a keystore (save it safely — you need it for every future update)
+Choose release build variant
+Output: android/app/release/app-release.apk
+Send this .apk file to students (WhatsApp, Google Drive, email, etc.)
+?? Part 2 — GitHub + Render Deployment (Backend + Admin)
+Upload this to GitHub — the entire project root:
+
+/ (everything in the workspace root)
++-- artifacts/
+¦   +-- api-server/     ? the backend
+¦   +-- admin/          ? the admin dashboard
++-- lib/                ? shared code (api types, validators)
++-- render.yaml         ? tells Render exactly how to deploy
++-- package.json
++-- pnpm-workspace.yaml
++-- pnpm-lock.yaml
+
+Do NOT upload: node_modules/, artifacts/api-server/dist/, artifacts/api-server/data/ (no DB files needed), screenshots/, .replit
+
+GitHub steps:
+
+Go to github.com ? New repository ? name it oalevel-resources (or any name)
+In Replit shell:
+git remote add origin https://github.com/YOUR-USERNAME/oalevel-resources.git
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+
+Render steps:
+
+Go to render.com ? New ? Web Service
+Connect your GitHub account ? select the repo
+Render will detect render.yaml automatically — no manual config needed
+Set environment variables (see Part 3 below)
+Click Deploy — takes ~5 minutes
+Your admin panel will be at: https://your-app.onrender.com/admin/
+?? Part 3 — All Environment Variables
+On Render.com dashboard (required before first deploy):
+Variable	What it is	Example
+DATABASE_URL	Your Neon PostgreSQL connection string	postgresql://user:pass@ep-xxx.neon.tech/dbname?sslmode=require
+ADMIN_DEFAULT_PASSWORD	Password you'll use to log into the admin panel first time	MySecurePass123
+SESSION_SECRET	Random secret for sessions — click "Generate" in Render	(auto-generated)
+NODE_ENV	Already set in render.yaml	production
+PORT	Already set in render.yaml	10000
+Where to get DATABASE_URL:
+Go to neon.tech ? sign up free
+Create a project ? create a database
+Copy the Connection String (looks like postgresql://...)
+Paste it as DATABASE_URL in Render
+Inside the admin panel after first login (not environment variables — set in Settings):
+Setting	Where	What
+Google Drive API Key	Admin ? Drive Config	From Google Cloud Console
+Google Drive Folder ID	Admin ? Drive Config	From your Drive folder URL
+OpenRouter API Key	Admin ? AI Settings	From openrouter.ai
+AI Model	Admin ? AI Settings	Default: openai/gpt-4o-mini
+App Name, Contact, About	Admin ? Settings	Your branding
+Checklist for first production launch:
+? 1. DATABASE_URL set in Render
+? 2. ADMIN_DEFAULT_PASSWORD set in Render
+? 3. SESSION_SECRET generated in Render
+? 4. Deploy ? login at /admin/ with your password
+? 5. Admin ? Drive Config ? paste API key + folder ID ? Sync
+? 6. Admin ? AI Settings ? paste OpenRouter API key
+? 7. Admin ? AI Knowledge ? Rebuild Index (so AI can read PDFs)
+? 8. Admin ? Settings ? change your password
+? 9. Android Studio ? update BASE_URL ? build APK ? distribute to students
