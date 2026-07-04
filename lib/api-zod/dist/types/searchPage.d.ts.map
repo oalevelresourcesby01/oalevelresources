@@ -1,1 +1,0 @@
-{"version":3,"file":"searchPage.d.ts","sourceRoot":"","sources":["../../../src/generated/types/searchPage.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,gBAAgB,CAAC;AAEnD,MAAM,WAAW,UAAU;IACzB,OAAO,EAAE,YAAY,EAAE,CAAC;IACxB,KAAK,EAAE,MAAM,CAAC;IACd,KAAK,EAAE,MAAM,CAAC;IACd,IAAI,CAAC,EAAE,MAAM,CAAC;IACd,QAAQ,CAAC,EAAE,MAAM,CAAC;CACnB"}

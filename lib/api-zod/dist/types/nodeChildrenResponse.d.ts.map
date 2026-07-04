@@ -1,1 +1,0 @@
-{"version":3,"file":"nodeChildrenResponse.d.ts","sourceRoot":"","sources":["../../../src/generated/types/nodeChildrenResponse.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,gBAAgB,CAAC;AAEnD,MAAM,WAAW,oBAAoB;IACnC,KAAK,EAAE,YAAY,EAAE,CAAC;IACtB,KAAK,EAAE,MAAM,CAAC;IACd,IAAI,EAAE,MAAM,CAAC;IACb,QAAQ,EAAE,MAAM,CAAC;CAClB"}
