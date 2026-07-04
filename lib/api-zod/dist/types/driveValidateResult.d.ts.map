@@ -1,0 +1,1 @@
+{"version":3,"file":"driveValidateResult.d.ts","sourceRoot":"","sources":["../../../src/generated/types/driveValidateResult.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,mBAAmB;IAClC,KAAK,EAAE,OAAO,CAAC;IACf,gBAAgB;IAChB,UAAU,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IAC3B,gBAAgB;IAChB,KAAK,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;CACvB"}

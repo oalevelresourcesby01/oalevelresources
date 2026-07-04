@@ -1,0 +1,1 @@
+{"version":3,"file":"logEntry.d.ts","sourceRoot":"","sources":["../../../src/generated/types/logEntry.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,QAAQ;IACvB,EAAE,EAAE,MAAM,CAAC;IACX,KAAK,EAAE,MAAM,CAAC;IACd,OAAO,EAAE,MAAM,CAAC;IAChB,gBAAgB;IAChB,OAAO,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IACxB,SAAS,EAAE,MAAM,CAAC;CACnB"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"aiMessage.d.ts","sourceRoot":"","sources":["../../../src/generated/types/aiMessage.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AAErD,MAAM,WAAW,SAAS;IACxB,EAAE,EAAE,MAAM,CAAC;IACX,SAAS,EAAE,MAAM,CAAC;IAClB,IAAI,EAAE,aAAa,CAAC;IACpB,OAAO,EAAE,MAAM,CAAC;IAChB,SAAS,EAAE,MAAM,CAAC;CACnB"}
