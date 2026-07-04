@@ -1,0 +1,1 @@
+{"version":3,"file":"subjectConfig.d.ts","sourceRoot":"","sources":["../../../src/generated/types/subjectConfig.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,kBAAkB,CAAC;AAEvD,MAAM,WAAW,aAAa;IAC5B,IAAI,EAAE,MAAM,CAAC;IACb,UAAU,EAAE,cAAc,EAAE,CAAC;CAC9B"}
