@@ -1,0 +1,1 @@
+{"version":3,"file":"getLogsParams.d.ts","sourceRoot":"","sources":["../../../src/generated/types/getLogsParams.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,gBAAgB,CAAC;AAEnD,MAAM,MAAM,aAAa,GAAG;IAC5B,KAAK,CAAC,EAAE,YAAY,CAAC;IACrB,KAAK,CAAC,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,CAAC;CACf,CAAC"}

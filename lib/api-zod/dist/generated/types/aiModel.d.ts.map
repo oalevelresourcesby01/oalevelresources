@@ -1,0 +1,1 @@
+{"version":3,"file":"aiModel.d.ts","sourceRoot":"","sources":["../../../src/generated/types/aiModel.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,OAAO;IACtB,EAAE,EAAE,MAAM,CAAC;IACX,IAAI,EAAE,MAAM,CAAC;IACb,gBAAgB;IAChB,aAAa,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IAC9B,gBAAgB;IAChB,OAAO,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;CACzB"}
