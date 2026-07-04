@@ -1,0 +1,1341 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 1.0.0
+  description: O/A Level Resources API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: config
+    description: System configuration
+  - name: announcements
+    description: Announcements management
+  - name: drive
+    description: Google Drive integration
+  - name: resources
+    description: Educational resources
+  - name: search
+    description: Search operations
+  - name: ai
+    description: AI chat and analysis
+  - name: logs
+    description: System logs
+  - name: folders
+    description: Folder generator
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ──────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Admin logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/change-password:
+    put:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change admin password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current session info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+  # ── CONFIG ────────────────────────────────────────────────────────────────
+  /config:
+    get:
+      operationId: getConfig
+      tags: [config]
+      summary: Get all system configuration (public safe fields)
+      responses:
+        "200":
+          description: Configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicConfig"
+
+  /config/admin:
+    get:
+      operationId: getAdminConfig
+      tags: [config]
+      summary: Get full system configuration (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Full configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminConfig"
+
+    put:
+      operationId: updateAdminConfig
+      tags: [config]
+      summary: Update system configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminConfigUpdate"
+      responses:
+        "200":
+          description: Updated configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminConfig"
+
+  # ── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
+  /announcements:
+    get:
+      operationId: getAnnouncements
+      tags: [announcements]
+      summary: List all announcements
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Announcements list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Create announcement
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{id}:
+    get:
+      operationId: getAnnouncement
+      tags: [announcements]
+      summary: Get announcement by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Announcement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+    put:
+      operationId: updateAnnouncement
+      tags: [announcements]
+      summary: Update announcement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Delete announcement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ── DRIVE ─────────────────────────────────────────────────────────────────
+  /drive/sync:
+    post:
+      operationId: triggerSync
+      tags: [drive]
+      summary: Trigger Google Drive synchronization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncOptions"
+      responses:
+        "200":
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncJobResponse"
+
+  /drive/sync/status:
+    get:
+      operationId: getSyncStatus
+      tags: [drive]
+      summary: Get current sync status
+      responses:
+        "200":
+          description: Sync status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncStatus"
+
+  /drive/sync/history:
+    get:
+      operationId: getSyncHistory
+      tags: [drive]
+      summary: Get sync history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Sync history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SyncRecord"
+
+  /drive/validate:
+    post:
+      operationId: validateDriveConfig
+      tags: [drive]
+      summary: Validate Google Drive configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriveValidateInput"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriveValidateResult"
+
+  # ── RESOURCES ─────────────────────────────────────────────────────────────
+  /resources/levels:
+    get:
+      operationId: getLevels
+      tags: [resources]
+      summary: Get all education levels
+      responses:
+        "200":
+          description: Levels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceNode"
+
+  /resources/stats:
+    get:
+      operationId: getResourceStats
+      tags: [resources]
+      summary: Get resource statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceStats"
+
+  /resources/recent:
+    get:
+      operationId: getRecentResources
+      tags: [resources]
+      summary: Get recently added resources
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Recent resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceItem"
+
+  /resources/nodes/{nodeId}:
+    get:
+      operationId: getNode
+      tags: [resources]
+      summary: Get a specific resource node (folder or file)
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resource node
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceNode"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resources/nodes/{nodeId}/children:
+    get:
+      operationId: listNodeChildren
+      tags: [resources]
+      summary: Get children of a resource node
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Children nodes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeChildrenResponse"
+
+  /resources/nodes/{nodeId}/breadcrumb:
+    get:
+      operationId: getNodeBreadcrumb
+      tags: [resources]
+      summary: Get breadcrumb path for a node
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Breadcrumb
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BreadcrumbItem"
+
+  /resources/pdf/{nodeId}/url:
+    get:
+      operationId: getPdfUrl
+      tags: [resources]
+      summary: Get a signed/proxied URL for a PDF file
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PDF URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfUrlResponse"
+
+  # ── SEARCH ────────────────────────────────────────────────────────────────
+  /search:
+    get:
+      operationId: search
+      tags: [search]
+      summary: Search resources
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [all, pdf, folder, subject, level]
+            default: all
+        - name: levelId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchPage"
+
+  # ── AI ────────────────────────────────────────────────────────────────────
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Send a message to the AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiReply"
+
+  /ai/sessions/{sessionId}/messages:
+    get:
+      operationId: getAiMessages
+      tags: [ai]
+      summary: Get messages in a session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiMessage"
+
+    delete:
+      operationId: clearAiSession
+      tags: [ai]
+      summary: Clear a chat session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /ai/models:
+    get:
+      operationId: getAiModels
+      tags: [ai]
+      summary: Get available AI models
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiModel"
+
+  # ── FOLDER GENERATOR ──────────────────────────────────────────────────────
+  /folders/generate:
+    post:
+      operationId: generateFolders
+      tags: [folders]
+      summary: Generate folder structure in Google Drive
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FolderGeneratorInput"
+      responses:
+        "200":
+          description: Generation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderGeneratorResult"
+
+  /folders/preview:
+    post:
+      operationId: previewFolders
+      tags: [folders]
+      summary: Preview folder structure before generation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FolderGeneratorInput"
+      responses:
+        "200":
+          description: Preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderPreviewResult"
+
+  # ── LOGS ──────────────────────────────────────────────────────────────────
+  /logs:
+    get:
+      operationId: getLogs
+      tags: [logs]
+      summary: Get system logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [error, warn, info, debug]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogsResponse"
+
+    delete:
+      operationId: clearLogs
+      tags: [logs]
+      summary: Clear system logs
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+# ── COMPONENTS ────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status, uptime, version]
+      properties:
+        status:
+          type: string
+        uptime:
+          type: number
+        version:
+          type: string
+        syncStatus:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        details:
+          type: ["string", "null"]
+
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: ["string", "null"]
+
+    # AUTH
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, expiresIn]
+      properties:
+        token:
+          type: string
+        expiresIn:
+          type: integer
+        user:
+          $ref: "#/components/schemas/AdminUser"
+
+    AdminUser:
+      type: object
+      required: [username, role]
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    # CONFIG
+    PublicConfig:
+      type: object
+      properties:
+        appName:
+          type: string
+        whatsappChannel:
+          type: string
+        aboutUs:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        maintenanceMode:
+          type: boolean
+        aiEnabled:
+          type: boolean
+        aiSystemPrompt:
+          type: string
+        aiModel:
+          type: string
+        theme:
+          type: string
+
+    AdminConfig:
+      type: object
+      properties:
+        appName:
+          type: string
+        driveRootFolderId:
+          type: string
+        whatsappChannel:
+          type: string
+        aboutUs:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        maintenanceMode:
+          type: boolean
+        aiEnabled:
+          type: boolean
+        aiSystemPrompt:
+          type: string
+        aiModel:
+          type: string
+        theme:
+          type: string
+        syncIntervalMinutes:
+          type: integer
+        autoSync:
+          type: boolean
+        cacheEnabled:
+          type: boolean
+        cacheTtlMinutes:
+          type: integer
+        maxDownloadSizeMb:
+          type: integer
+        openRouterApiKeySet:
+          type: boolean
+        driveApiKeySet:
+          type: boolean
+
+    AdminConfigUpdate:
+      type: object
+      properties:
+        appName:
+          type: string
+        driveRootFolderId:
+          type: string
+        driveApiKey:
+          type: ["string", "null"]
+        openRouterApiKey:
+          type: ["string", "null"]
+        whatsappChannel:
+          type: string
+        aboutUs:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        maintenanceMode:
+          type: boolean
+        aiEnabled:
+          type: boolean
+        aiSystemPrompt:
+          type: string
+        aiModel:
+          type: string
+        theme:
+          type: string
+        syncIntervalMinutes:
+          type: integer
+        autoSync:
+          type: boolean
+        cacheEnabled:
+          type: boolean
+        cacheTtlMinutes:
+          type: integer
+        maxDownloadSizeMb:
+          type: integer
+
+    # ANNOUNCEMENTS
+    Announcement:
+      type: object
+      required: [id, title, message, active, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        active:
+          type: boolean
+        priority:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: ["string", "null"]
+
+    AnnouncementInput:
+      type: object
+      required: [title, message]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        active:
+          type: boolean
+        priority:
+          type: integer
+
+    AnnouncementUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        active:
+          type: boolean
+        priority:
+          type: integer
+
+    # DRIVE
+    SyncOptions:
+      type: object
+      properties:
+        force:
+          type: boolean
+
+    SyncJobResponse:
+      type: object
+      required: [jobId, status]
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+
+    SyncStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [idle, running, error]
+        lastSync:
+          type: ["string", "null"]
+        progress:
+          type: ["number", "null"]
+        message:
+          type: ["string", "null"]
+        totalFiles:
+          type: ["integer", "null"]
+        totalFolders:
+          type: ["integer", "null"]
+
+    SyncRecord:
+      type: object
+      required: [id, startedAt, status]
+      properties:
+        id:
+          type: string
+        startedAt:
+          type: string
+        completedAt:
+          type: ["string", "null"]
+        status:
+          type: string
+        filesAdded:
+          type: integer
+        filesRemoved:
+          type: integer
+        filesUpdated:
+          type: integer
+        foldersAdded:
+          type: integer
+        errorMessage:
+          type: ["string", "null"]
+
+    DriveValidateInput:
+      type: object
+      required: [driveApiKey, rootFolderId]
+      properties:
+        driveApiKey:
+          type: string
+        rootFolderId:
+          type: string
+
+    DriveValidateResult:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+        folderName:
+          type: ["string", "null"]
+        error:
+          type: ["string", "null"]
+
+    # RESOURCES
+    ResourceNode:
+      type: object
+      required: [id, driveId, name, type, depth]
+      properties:
+        id:
+          type: string
+        driveId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [folder, pdf]
+        depth:
+          type: integer
+        parentId:
+          type: ["string", "null"]
+        mimeType:
+          type: ["string", "null"]
+        size:
+          type: ["integer", "null"]
+        modifiedAt:
+          type: ["string", "null"]
+        childCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    ResourceItem:
+      type: object
+      required: [id, driveId, name, type]
+      properties:
+        id:
+          type: string
+        driveId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        parentId:
+          type: ["string", "null"]
+        parentName:
+          type: ["string", "null"]
+        size:
+          type: ["integer", "null"]
+        modifiedAt:
+          type: ["string", "null"]
+
+    NodeChildrenResponse:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceNode"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    BreadcrumbItem:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    ResourceStats:
+      type: object
+      required: [totalPdfs, totalFolders, totalLevels, totalSubjects, lastSync]
+      properties:
+        totalPdfs:
+          type: integer
+        totalFolders:
+          type: integer
+        totalLevels:
+          type: integer
+        totalSubjects:
+          type: integer
+        lastSync:
+          type: ["string", "null"]
+        totalSizeBytes:
+          type: ["integer", "null"]
+
+    PdfUrlResponse:
+      type: object
+      required: [url, expiresAt]
+      properties:
+        url:
+          type: string
+        expiresAt:
+          type: string
+        driveId:
+          type: string
+
+    # SEARCH
+    SearchPage:
+      type: object
+      required: [results, total, query]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+        total:
+          type: integer
+        query:
+          type: string
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    SearchResult:
+      type: object
+      required: [id, name, type]
+      properties:
+        id:
+          type: string
+        driveId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        breadcrumb:
+          type: array
+          items:
+            $ref: "#/components/schemas/BreadcrumbItem"
+        size:
+          type: ["integer", "null"]
+        modifiedAt:
+          type: ["string", "null"]
+
+    # AI
+    AiChatInput:
+      type: object
+      required: [message, sessionId]
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: string
+        model:
+          type: ["string", "null"]
+        imageBase64:
+          type: ["string", "null"]
+        pdfText:
+          type: ["string", "null"]
+
+    AiReply:
+      type: object
+      required: [reply, sessionId]
+      properties:
+        reply:
+          type: string
+        sessionId:
+          type: string
+        model:
+          type: string
+        tokens:
+          type: ["integer", "null"]
+
+    AiMessage:
+      type: object
+      required: [id, sessionId, role, content, createdAt]
+      properties:
+        id:
+          type: string
+        sessionId:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        createdAt:
+          type: string
+
+    AiModel:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        contextLength:
+          type: ["integer", "null"]
+        pricing:
+          type: ["string", "null"]
+
+    # FOLDER GENERATOR
+    FolderGeneratorInput:
+      type: object
+      required: [levels]
+      properties:
+        levels:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelConfig"
+
+    LevelConfig:
+      type: object
+      required: [name, subjects]
+      properties:
+        name:
+          type: string
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubjectConfig"
+
+    SubjectConfig:
+      type: object
+      required: [name, categories]
+      properties:
+        name:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryConfig"
+
+    CategoryConfig:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        years:
+          type: array
+          items:
+            type: string
+        sessions:
+          type: array
+          items:
+            type: string
+        variants:
+          type: array
+          items:
+            type: string
+        paperTypes:
+          type: array
+          items:
+            type: string
+
+    FolderGeneratorResult:
+      type: object
+      required: [created, skipped, errors, total]
+      properties:
+        created:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: integer
+        total:
+          type: integer
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/FolderGeneratorDetail"
+
+    FolderPreviewResult:
+      type: object
+      required: [folders, total]
+      properties:
+        folders:
+          type: array
+          items:
+            $ref: "#/components/schemas/FolderPreviewItem"
+        total:
+          type: integer
+
+    FolderGeneratorDetail:
+      type: object
+      required: [path, status]
+      properties:
+        path:
+          type: string
+        status:
+          type: string
+          enum: [created, skipped, error]
+        driveId:
+          type: ["string", "null"]
+        error:
+          type: ["string", "null"]
+
+    FolderPreviewItem:
+      type: object
+      required: [path, depth]
+      properties:
+        path:
+          type: string
+        depth:
+          type: integer
+
+    # LOGS
+    LogsResponse:
+      type: object
+      required: [logs, total]
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogEntry"
+        total:
+          type: integer
+
+    LogEntry:
+      type: object
+      required: [id, level, message, createdAt]
+      properties:
+        id:
+          type: string
+        level:
+          type: string
+        message:
+          type: string
+        context:
+          type: ["string", "null"]
+        createdAt:
+          type: string
