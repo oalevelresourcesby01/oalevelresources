@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O/A Level Resources — Android App Screens</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    background: #F0F4F0;
+    padding: 40px 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #1B5E20;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+  .screens-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .screen-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .screen-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2E7D32;
+    letter-spacing: 0.3px;
+  }
+  .screen-desc {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    max-width: 200px;
+    line-height: 1.4;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 220px;
+    height: 440px;
+    background: #fff;
+    border-radius: 36px;
+    border: 7px solid #1a1a1a;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.15);
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 5px;
+    background: #1a1a1a;
+    border-radius: 10px;
+    z-index: 10;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #FAFAFA;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 22px;
+    background: #1B5E20;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 10px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .status-icon { width: 8px; height: 8px; background: white; border-radius: 2px; opacity: 0.9; }
+  .status-time { color: white; font-size: 7px; font-weight: 600; margin-right: auto; padding-left: 2px; }
+
+  /* Top app bar */
+  .top-bar {
+    background: #1B5E20;
+    color: white;
+    padding: 8px 10px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .top-bar-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .top-bar-icon { width: 20px; height: 20px; opacity: 0.9; }
+  .back-arrow { color: white; font-size: 14px; cursor: pointer; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    background: #fff;
+    border-top: 1px solid #E8F5E9;
+    display: flex;
+    padding: 6px 0 8px;
+    flex-shrink: 0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 7px;
+    color: #999;
+  }
+  .nav-item.active { color: #1B5E20; }
+  .nav-dot { width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .nav-item.active .nav-dot { background: #E8F5E9; }
+
+  /* Scrollable body */
+  .screen-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  /* Cards */
+  .card {
+    background: #A5D6A7;
+    border-radius: 12px;
+    padding: 10px;
+    margin: 0 10px 8px;
+  }
+  .card-title { font-size: 11px; font-weight: 700; color: #1B5E20; margin-bottom: 3px; }
+  .card-sub { font-size: 9px; color: #2E7D32; }
+
+  .section-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: #1B5E20;
+    padding: 8px 10px 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Quick action chips */
+  .chips-row {
+    display: flex;
+    gap: 6px;
+    padding: 6px 10px;
+    overflow-x: hidden;
+  }
+  .chip {
+    background: #E8F5E9;
+    border: 1px solid #A5D6A7;
+    border-radius: 20px;
+    padding: 4px 9px;
+    font-size: 8px;
+    font-weight: 600;
+    color: #1B5E20;
+    white-space: nowrap;
+  }
+  .chip.active { background: #1B5E20; color: white; border-color: #1B5E20; }
+
+  /* Announcement card */
+  .announce {
+    background: #EDE7F6;
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin: 0 10px 6px;
+    border-left: 3px solid #7E57C2;
+  }
+  .announce-title { font-size: 9px; font-weight: 700; color: #4527A0; }
+  .announce-body { font-size: 8px; color: #5E35B1; margin-top: 2px; }
+
+  /* Level grid */
+  .level-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 0 10px;
+    margin-bottom: 8px;
+  }
+  .level-card {
+    background: #C8E6C9;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .level-icon { font-size: 18px; margin-bottom: 3px; }
+  .level-name { font-size: 9px; font-weight: 700; color: #1B5E20; }
+  .level-count { font-size: 8px; color: #388E3C; }
+
+  /* WhatsApp card */
+  .wa-card {
+    background: #25D366;
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin: 0 10px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wa-icon { font-size: 16px; }
+  .wa-text { font-size: 9px; font-weight: 700; color: white; }
+  .wa-sub { font-size: 8px; color: rgba(255,255,255,0.85); }
+
+  /* Recent items */
+  .list-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    gap: 8px;
+    border-bottom: 1px solid #F1F8F1;
+  }
+  .list-icon { font-size: 14px; flex-shrink: 0; }
+  .list-title { font-size: 9px; font-weight: 600; color: #212121; flex: 1; line-height: 1.2; }
+  .list-sub { font-size: 8px; color: #888; }
+  .list-badge {
+    background: #E8F5E9;
+    color: #2E7D32;
+    font-size: 7px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 8px;
+  }
+
+  /* Browse breadcrumb */
+  .breadcrumb {
+    background: #F1F8F0;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8px;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .breadcrumb span { color: #1B5E20; font-weight: 600; }
+  .breadcrumb .sep { color: #aaa; }
+
+  /* AI Chat */
+  .chat-area {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #F8FBF8;
+    overflow: hidden;
+  }
+  .bubble {
+    max-width: 80%;
+    padding: 7px 10px;
+    border-radius: 14px;
+    font-size: 8px;
+    line-height: 1.4;
+  }
+  .bubble.user {
+    background: #1B5E20;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble.ai {
+    background: #E8F5E9;
+    color: #212121;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .bubble.ai strong { color: #1B5E20; }
+  .thinking {
+    display: flex;
+    gap: 3px;
+    padding: 6px 10px;
+    align-self: flex-start;
+  }
+  .dot { width: 5px; height: 5px; background: #A5D6A7; border-radius: 50%; }
+  .chat-input-bar {
+    background: #fff;
+    border-top: 1px solid #E8F5E9;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .chat-field {
+    flex: 1;
+    border: 1px solid #A5D6A7;
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 8px;
+    color: #555;
+  }
+  .send-btn {
+    width: 26px;
+    height: 26px;
+    background: #1B5E20;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .suggestion-chip {
+    background: #E8F5E9;
+    border: 1px solid #A5D6A7;
+    border-radius: 16px;
+    padding: 4px 8px;
+    font-size: 7.5px;
+    color: #1B5E20;
+    font-weight: 500;
+  }
+
+  /* Search */
+  .search-bar {
+    background: #F1F8F1;
+    border-radius: 24px;
+    margin: 6px 8px;
+    padding: 7px 12px;
+    font-size: 9px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* PDF Viewer */
+  .pdf-page {
+    flex: 1;
+    background: #fff;
+    margin: 6px 8px 0;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .pdf-header {
+    background: #E8F5E9;
+    padding: 5px 8px;
+    font-size: 8px;
+    font-weight: 700;
+    color: #1B5E20;
+    border-bottom: 1px solid #C8E6C9;
+  }
+  .pdf-text-line {
+    height: 5px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    margin: 5px 8px 0;
+  }
+  .pdf-text-line.short { width: 60%; }
+  .pdf-text-line.med { width: 80%; }
+  .progress-bar {
+    height: 3px;
+    background: #E8F5E9;
+    flex-shrink: 0;
+    margin: 4px 8px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #1B5E20;
+    width: 40%;
+  }
+
+  /* Settings */
+  .settings-section { padding: 6px 10px 2px; }
+  .settings-title { font-size: 9px; font-weight: 700; color: #1B5E20; text-transform: uppercase; letter-spacing: 0.5px; }
+  .settings-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid #F1F8F1;
+    gap: 8px;
+  }
+  .settings-icon { font-size: 14px; }
+  .settings-label { font-size: 9px; font-weight: 600; color: #212121; flex: 1; }
+  .settings-value { font-size: 8px; color: #888; }
+  .toggle {
+    width: 24px;
+    height: 13px;
+    background: #1B5E20;
+    border-radius: 7px;
+    position: relative;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    width: 9px;
+    height: 9px;
+    background: white;
+    border-radius: 50%;
+  }
+
+  /* Downloads */
+  .dl-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    gap: 8px;
+    border-bottom: 1px solid #F1F8F1;
+  }
+  .dl-thumb {
+    width: 32px;
+    height: 36px;
+    background: #FFCDD2;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .dl-progress {
+    height: 3px;
+    background: #E0E0E0;
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .dl-fill {
+    height: 100%;
+    background: #1B5E20;
+  }
+
+  /* Splash screen */
+  .splash {
+    background: #FAFAF5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex: 1;
+  }
+  .splash-logo {
+    width: 64px;
+    height: 64px;
+    background: #1B5E20;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 4px 16px rgba(27,94,32,0.3);
+  }
+  .splash-title { font-size: 14px; font-weight: 700; color: #1B5E20; }
+  .splash-sub { font-size: 9px; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>📱 O/A Level Resources — Android App</h1>
+<p class="subtitle">All 8 screens built in Jetpack Compose with Material 3 · Brand colour: Forest Green (#1B5E20)</p>
+
+<div class="screens-grid">
+
+  <!-- SPLASH -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="splash">
+          <div class="splash-logo">📚</div>
+          <div class="splash-title">O/A Level Resources</div>
+          <div class="splash-sub">Study smarter with AI</div>
+          <div style="width:40px;height:3px;background:#A5D6A7;border-radius:2px;margin-top:16px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">1. Splash Screen</div>
+    <div class="screen-desc">Shows on app launch while loading data from server</div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar">
+          <span class="top-bar-title">O/A Level Resources</span>
+          <span style="font-size:14px;">🔔</span>
+        </div>
+        <div class="screen-body" style="overflow-y:hidden;">
+          <!-- Quick actions -->
+          <div class="chips-row">
+            <div class="chip active">🔍 Search</div>
+            <div class="chip">⬇ Downloads</div>
+            <div class="chip">★ Favourites</div>
+          </div>
+          <!-- Announcement -->
+          <div class="announce">
+            <div class="announce-title">📢 New Papers Added</div>
+            <div class="announce-body">O Level Mathematics 2024 past papers are now available in the library.</div>
+          </div>
+          <!-- Levels -->
+          <div class="section-header">Browse by Level</div>
+          <div class="level-grid">
+            <div class="level-card">
+              <div class="level-icon">📗</div>
+              <div class="level-name">O Level</div>
+              <div class="level-count">142 resources</div>
+            </div>
+            <div class="level-card">
+              <div class="level-icon">📘</div>
+              <div class="level-name">A Level</div>
+              <div class="level-count">98 resources</div>
+            </div>
+            <div class="level-card">
+              <div class="level-icon">📙</div>
+              <div class="level-name">IGCSE</div>
+              <div class="level-count">76 resources</div>
+            </div>
+            <div class="level-card">
+              <div class="level-icon">🤖</div>
+              <div class="level-name">Ask AI</div>
+              <div class="level-count">Powered by GPT</div>
+            </div>
+          </div>
+          <!-- WhatsApp -->
+          <div class="wa-card">
+            <div class="wa-icon">💬</div>
+            <div>
+              <div class="wa-text">Join WhatsApp Channel</div>
+              <div class="wa-sub">Get updates & new resources</div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item active">
+            <div class="nav-dot">🏠</div>
+            <span>Home</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">📂</div>
+            <span>Browse</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🔍</div>
+            <span>Search</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🤖</div>
+            <span>AI Chat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">2. Home Screen</div>
+    <div class="screen-desc">Announcements, quick actions, level cards, WhatsApp link</div>
+  </div>
+
+  <!-- BROWSE -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar">
+          <span class="back-arrow">←</span>
+          <span class="top-bar-title">Mathematics</span>
+          <span style="font-size:12px;">⋮</span>
+        </div>
+        <div class="breadcrumb">
+          <span>O Level</span>
+          <span class="sep">›</span>
+          <span>Mathematics</span>
+        </div>
+        <div class="screen-body">
+          <div class="list-item">
+            <div class="list-icon">📁</div>
+            <div style="flex:1">
+              <div class="list-title">Algebra</div>
+              <div class="list-sub">12 resources</div>
+            </div>
+            <span style="font-size:10px;color:#aaa">›</span>
+          </div>
+          <div class="list-item">
+            <div class="list-icon">📁</div>
+            <div style="flex:1">
+              <div class="list-title">Geometry</div>
+              <div class="list-sub">9 resources</div>
+            </div>
+            <span style="font-size:10px;color:#aaa">›</span>
+          </div>
+          <div class="list-item">
+            <div class="list-icon">📁</div>
+            <div style="flex:1">
+              <div class="list-title">Statistics</div>
+              <div class="list-sub">7 resources</div>
+            </div>
+            <span style="font-size:10px;color:#aaa">›</span>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">O Level Maths 2024 P1.pdf</div>
+              <div class="list-sub">2.4 MB · Past Paper</div>
+            </div>
+            <div class="list-badge">PDF</div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">O Level Maths 2024 P2.pdf</div>
+              <div class="list-sub">1.9 MB · Past Paper</div>
+            </div>
+            <div class="list-badge">PDF</div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">Formula Sheet.pdf</div>
+              <div class="list-sub">0.5 MB · Reference</div>
+            </div>
+            <div class="list-badge">PDF</div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">Revision Notes Ch 1–5.pdf</div>
+              <div class="list-sub">3.1 MB · Notes</div>
+            </div>
+            <div class="list-badge">PDF</div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item">
+            <div class="nav-dot">🏠</div>
+            <span>Home</span>
+          </div>
+          <div class="nav-item active">
+            <div class="nav-dot">📂</div>
+            <span>Browse</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🔍</div>
+            <span>Search</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🤖</div>
+            <span>AI Chat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">3. Browse Screen</div>
+    <div class="screen-desc">Navigate folders by level → subject → topic → PDF files</div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar" style="padding-bottom:6px;">
+          <div class="search-bar" style="margin:0;flex:1;background:rgba(255,255,255,0.15);border-radius:20px;">
+            <span style="font-size:10px;">🔍</span>
+            <span style="font-size:8px;color:rgba(255,255,255,0.8);">Search resources…</span>
+          </div>
+        </div>
+        <div class="chips-row" style="padding:6px 8px;">
+          <div class="chip active">All</div>
+          <div class="chip">📄 PDFs</div>
+          <div class="chip">📁 Folders</div>
+        </div>
+        <div class="screen-body">
+          <div style="padding:4px 10px 2px;font-size:8px;color:#888;">Results for "algebra"</div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">Algebra Worked Examples.pdf</div>
+              <div class="list-sub" style="display:flex;gap:3px;align-items:center;">
+                <span>O Level</span><span>›</span><span>Maths</span><span>›</span><span>Algebra</span>
+              </div>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon">📁</div>
+            <div style="flex:1">
+              <div class="list-title">Algebra</div>
+              <div class="list-sub" style="display:flex;gap:3px;align-items:center;">
+                <span>O Level</span><span>›</span><span>Mathematics</span>
+              </div>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">A Level Further Algebra Notes.pdf</div>
+              <div class="list-sub" style="display:flex;gap:3px;align-items:center;">
+                <span>A Level</span><span>›</span><span>Maths</span>
+              </div>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">Linear Algebra Revision.pdf</div>
+              <div class="list-sub" style="display:flex;gap:3px;align-items:center;">
+                <span>A Level</span><span>›</span><span>Maths</span><span>›</span><span>Algebra</span>
+              </div>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="list-icon" style="color:#c62828;">📄</div>
+            <div style="flex:1">
+              <div class="list-title">MCQ Algebra Practice 2023.pdf</div>
+              <div class="list-sub" style="display:flex;gap:3px;align-items:center;">
+                <span>O Level</span><span>›</span><span>Maths</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item">
+            <div class="nav-dot">🏠</div>
+            <span>Home</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">📂</div>
+            <span>Browse</span>
+          </div>
+          <div class="nav-item active">
+            <div class="nav-dot">🔍</div>
+            <span>Search</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🤖</div>
+            <span>AI Chat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">4. Search Screen</div>
+    <div class="screen-desc">Full-text search across all PDFs and folders with filters</div>
+  </div>
+
+  <!-- AI CHAT -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar">
+          <span class="top-bar-title">🤖 AI Study Assistant</span>
+          <span style="font-size:10px;opacity:0.7;">GPT-4o</span>
+        </div>
+        <div class="chat-area">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+            <div class="suggestion-chip">Solve an MCQ</div>
+            <div class="suggestion-chip">Explain a concept</div>
+            <div class="suggestion-chip">Summarise a topic</div>
+          </div>
+          <div class="bubble ai">
+            Hello! I'm your AI study assistant. I have access to all your O/A Level resources. <strong>What would you like help with?</strong>
+          </div>
+          <div class="bubble user">
+            Explain quadratic equations simply
+          </div>
+          <div class="bubble ai">
+            <strong>Quadratic Equations</strong> are equations of the form <strong>ax² + bx + c = 0</strong>.<br><br>
+            You can solve them by:<br>
+            • Factorising<br>
+            • Quadratic formula<br>
+            • Completing the square<br><br>
+            <em>📚 Based on your O Level Maths resources</em>
+          </div>
+          <div class="thinking">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <div class="chat-field">Ask anything about your subjects…</div>
+          <div class="send-btn">➤</div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item">
+            <div class="nav-dot">🏠</div>
+            <span>Home</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">📂</div>
+            <span>Browse</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🔍</div>
+            <span>Search</span>
+          </div>
+          <div class="nav-item active">
+            <div class="nav-dot">🤖</div>
+            <span>AI Chat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">5. AI Chat Screen</div>
+    <div class="screen-desc">AI searches your indexed PDFs before answering — contextual, accurate</div>
+  </div>
+
+  <!-- PDF VIEWER -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar">
+          <span class="back-arrow">←</span>
+          <span class="top-bar-title" style="font-size:11px;">O Level Maths 2024 P1</span>
+          <span style="font-size:11px;">🌙</span>
+          <span style="font-size:11px;">★</span>
+          <span style="font-size:11px;">⬇</span>
+        </div>
+        <div class="screen-body">
+          <div class="pdf-page" style="flex:1;margin:6px 8px 4px;">
+            <div class="pdf-header">Cambridge O Level Mathematics — Paper 1 — 2024</div>
+            <div style="padding:6px 8px;flex:1;">
+              <div style="font-size:7.5px;color:#333;font-weight:600;margin-bottom:4px;">Section A — Answer all questions</div>
+              <div style="font-size:7px;color:#555;line-height:1.5;margin-bottom:6px;">
+                1. Solve the equation 3x + 7 = 22<br>
+                &nbsp;&nbsp;&nbsp;x = _______ [2]
+              </div>
+              <div style="background:#F5F5F5;border-radius:4px;padding:5px;margin-bottom:4px;">
+                <div style="font-size:7px;color:#555;">2. The diagram shows triangle ABC.</div>
+                <div style="width:60px;height:40px;background:#E0E0E0;border-radius:3px;margin:4px auto;display:flex;align-items:center;justify-content:center;font-size:9px;color:#999;">▲</div>
+              </div>
+              <div class="pdf-text-line"></div>
+              <div class="pdf-text-line med" style="margin-top:3px;"></div>
+              <div class="pdf-text-line short" style="margin-top:3px;"></div>
+              <div class="pdf-text-line" style="margin-top:6px;"></div>
+              <div class="pdf-text-line med" style="margin-top:3px;"></div>
+            </div>
+          </div>
+          <div style="padding:0 8px 4px;font-size:7.5px;color:#888;display:flex;justify-content:space-between;">
+            <span>Page 3 of 12</span>
+            <span>40% read</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">6. PDF Viewer Screen</div>
+    <div class="screen-desc">In-app PDF reading with night mode, favourites, download, progress tracking</div>
+  </div>
+
+  <!-- DOWNLOADS -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar">
+          <span class="top-bar-title">⬇ Downloads</span>
+        </div>
+        <div class="screen-body">
+          <div class="dl-item">
+            <div class="dl-thumb">📄</div>
+            <div style="flex:1">
+              <div class="list-title">O Level Maths 2024 P1.pdf</div>
+              <div class="dl-progress"><div class="dl-fill" style="width:100%"></div></div>
+              <div class="list-sub" style="margin-top:2px;">2.4 MB · Downloaded</div>
+            </div>
+            <span style="font-size:14px;">✅</span>
+          </div>
+          <div class="dl-item">
+            <div class="dl-thumb">📄</div>
+            <div style="flex:1">
+              <div class="list-title">Physics Notes Ch 1-3.pdf</div>
+              <div class="dl-progress"><div class="dl-fill" style="width:65%"></div></div>
+              <div class="list-sub" style="margin-top:2px;">1.1 / 1.7 MB · Downloading…</div>
+            </div>
+            <span style="font-size:14px;">⏳</span>
+          </div>
+          <div class="dl-item">
+            <div class="dl-thumb">📄</div>
+            <div style="flex:1">
+              <div class="list-title">Formula Sheet.pdf</div>
+              <div class="dl-progress"><div class="dl-fill" style="width:100%"></div></div>
+              <div class="list-sub" style="margin-top:2px;">0.5 MB · Downloaded</div>
+            </div>
+            <span style="font-size:14px;">✅</span>
+          </div>
+          <div style="text-align:center;padding:20px 10px;color:#ccc;font-size:9px;">
+            Downloaded files are available offline
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item">
+            <div class="nav-dot">🏠</div>
+            <span>Home</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">📂</div>
+            <span>Browse</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🔍</div>
+            <span>Search</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🤖</div>
+            <span>AI Chat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">7. Downloads Screen</div>
+    <div class="screen-desc">Offline PDFs — download once, read anytime without internet</div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen-wrapper">
+    <div class="phone">
+      <div class="screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icon"></div>
+          <div class="status-icon"></div>
+          <div class="status-icon" style="border-radius:50%"></div>
+        </div>
+        <div class="top-bar">
+          <span class="top-bar-title">⚙️ Settings</span>
+        </div>
+        <div class="screen-body">
+          <div class="settings-section">
+            <div class="settings-title">App</div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">🌙</div>
+            <div class="settings-label">Dark Mode</div>
+            <div class="toggle"></div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">📶</div>
+            <div class="settings-label">Download on Wi-Fi only</div>
+            <div class="toggle" style="background:#ccc;"></div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">📦</div>
+            <div class="settings-label">Clear Cache</div>
+            <div class="settings-value">42 MB</div>
+          </div>
+          <div class="settings-section" style="margin-top:6px;">
+            <div class="settings-title">About</div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">ℹ️</div>
+            <div class="settings-label">Version</div>
+            <div class="settings-value">1.0.0</div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">📧</div>
+            <div class="settings-label">Contact Support</div>
+            <span style="font-size:10px;color:#aaa">›</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">🔒</div>
+            <div class="settings-label">Privacy Policy</div>
+            <span style="font-size:10px;color:#aaa">›</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">⭐</div>
+            <div class="settings-label">Rate the App</div>
+            <span style="font-size:10px;color:#aaa">›</span>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item">
+            <div class="nav-dot">🏠</div>
+            <span>Home</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">📂</div>
+            <span>Browse</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🔍</div>
+            <span>Search</span>
+          </div>
+          <div class="nav-item">
+            <div class="nav-dot">🤖</div>
+            <span>AI Chat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">8. Settings Screen</div>
+    <div class="screen-desc">Dark mode, cache management, about info, contact support</div>
+  </div>
+
+</div>
+
+<div style="text-align:center;margin-top:48px;padding:24px;background:#E8F5E9;border-radius:16px;max-width:800px;margin-left:auto;margin-right:auto;">
+  <div style="font-size:18px;font-weight:700;color:#1B5E20;margin-bottom:8px;">App Technical Summary</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:left;margin-top:16px;">
+    <div>
+      <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:6px;">LANGUAGE & UI</div>
+      <div style="font-size:10px;color:#555;line-height:1.8;">
+        Kotlin<br>Jetpack Compose<br>Material 3<br>Forest Green theme<br>Dark mode ready
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:6px;">ARCHITECTURE</div>
+      <div style="font-size:10px;color:#555;line-height:1.8;">
+        MVVM + Clean Arch<br>Hilt (DI)<br>Room (local DB)<br>Retrofit (API)<br>WorkManager (sync)
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:6px;">FEATURES</div>
+      <div style="font-size:10px;color:#555;line-height:1.8;">
+        Offline PDF download<br>AI chat with RAG<br>Full-text search<br>Favourites & history<br>Push notifications
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
