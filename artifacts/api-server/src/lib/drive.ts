@@ -188,9 +188,14 @@ export async function scanDrive(
         client.release();
       }
 
-      // Queue subfolders
+      // Queue subfolders. Each folder's own resource id (looked up by its
+      // OWN driveId, not the current item's driveId) becomes the parentId
+      // used when inserting *that folder's* children later — using
+      // `item.driveId` here was a bug that attached every folder's children
+      // one level too high in the tree (to the grandparent instead of the
+      // direct parent), leaving files unreachable via normal navigation.
       for (const folder of folderChildren) {
-        const parentResourceId = existingMap.get(item.driveId) ?? item.driveId;
+        const parentResourceId = existingMap.get(folder.id) ?? folder.id;
         queue.push({
           driveId: folder.id,
           parentId: parentResourceId,
