@@ -1,5 +1,6 @@
 import { runMigrations } from "./db/migrate";
 import { startAutoSync } from "./lib/sync";
+import { startKeepAlive } from "./lib/keepAlive";
 import app from "./app";
 import { logger } from "./lib/logger";
 
@@ -28,4 +29,5 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  startKeepAlive();
 });
