@@ -1,0 +1,86 @@
+2026-07-05T13:54:54.943544515Z ==> Downloading cache...
+2026-07-05T13:54:54.97875728Z ==> Cloning from https://github.com/oalevelresourcesby01/oalevelresources
+2026-07-05T13:54:56.052263316Z ==> Checking out commit 16e9667917c852a33991d248b553ca45efb46ab5 in branch main
+2026-07-05T13:55:01.642376844Z ==> Downloaded 119MB in 2s. Extraction took 5s.
+2026-07-05T13:55:05.235178631Z ==> Using Node.js version 24.14.1 (default)
+2026-07-05T13:55:05.235188541Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-07-05T13:55:05.278725407Z ==> Running build command 'pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build'...
+2026-07-05T13:55:07.175187805Z 
+2026-07-05T13:55:07.175210406Z > @workspace/api-server@0.0.0 build /opt/render/project/src/artifacts/api-server
+2026-07-05T13:55:07.175216416Z > node ./build.mjs
+2026-07-05T13:55:07.175219306Z 
+2026-07-05T13:55:08.130668367Z ==> Uploading build...
+2026-07-05T13:55:16.024039161Z ==> Uploaded in 4.1s. Compression took 3.8s
+2026-07-05T13:55:16.050349122Z ==> Build successful 🎉
+2026-07-05T13:55:20.167472218Z ==> Deploying...
+2026-07-05T13:55:20.253157489Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-07-05T13:55:40.936583665Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T13:55:43.03234144Z /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45
+2026-07-05T13:55:43.032373301Z     Error.captureStackTrace(err)
+2026-07-05T13:55:43.03237717Z           ^
+2026-07-05T13:55:43.032379961Z 
+2026-07-05T13:55:43.032382741Z AggregateError [ECONNREFUSED]: 
+2026-07-05T13:55:43.032385811Z     at /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11
+2026-07-05T13:55:43.032391331Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-07-05T13:55:43.032394191Z     at async runMigrations (/opt/render/project/src/artifacts/api-server/src/db/migrate.ts:6:3)
+2026-07-05T13:55:43.032396851Z     at async <anonymous> (/opt/render/project/src/artifacts/api-server/src/index.ts:21:1) {
+2026-07-05T13:55:43.032400731Z   code: 'ECONNREFUSED',
+2026-07-05T13:55:43.032404131Z   [errors]: [
+2026-07-05T13:55:43.032408281Z     Error: connect ECONNREFUSED ::1:5432
+2026-07-05T13:55:43.032411791Z         at createConnectionError (node:net:1686:14)
+2026-07-05T13:55:43.032414831Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T13:55:43.032417741Z       errno: -111,
+2026-07-05T13:55:43.032420611Z       code: 'ECONNREFUSED',
+2026-07-05T13:55:43.032423891Z       syscall: 'connect',
+2026-07-05T13:55:43.032426491Z       address: '::1',
+2026-07-05T13:55:43.032428952Z       port: 5432
+2026-07-05T13:55:43.032431482Z     },
+2026-07-05T13:55:43.032434352Z     Error: connect ECONNREFUSED 127.0.0.1:5432
+2026-07-05T13:55:43.032436922Z         at createConnectionError (node:net:1686:14)
+2026-07-05T13:55:43.032440382Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T13:55:43.032443262Z       errno: -111,
+2026-07-05T13:55:43.032446112Z       code: 'ECONNREFUSED',
+2026-07-05T13:55:43.032448622Z       syscall: 'connect',
+2026-07-05T13:55:43.032451512Z       address: '127.0.0.1',
+2026-07-05T13:55:43.032454282Z       port: 5432
+2026-07-05T13:55:43.032456992Z     }
+2026-07-05T13:55:43.032460002Z   ]
+2026-07-05T13:55:43.032462692Z }
+2026-07-05T13:55:43.032465172Z 
+2026-07-05T13:55:43.032467812Z Node.js v24.14.1
+2026-07-05T13:55:44.762581848Z ==> Exited with status 1
+2026-07-05T13:55:44.767970004Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2026-07-05T13:55:49.365612546Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T13:55:51.466566752Z /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45
+2026-07-05T13:55:51.466593842Z     Error.captureStackTrace(err)
+2026-07-05T13:55:51.466597273Z           ^
+2026-07-05T13:55:51.466599913Z 
+2026-07-05T13:55:51.466602433Z AggregateError [ECONNREFUSED]: 
+2026-07-05T13:55:51.466605513Z     at /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11
+2026-07-05T13:55:51.466612603Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-07-05T13:55:51.466615703Z     at async runMigrations (/opt/render/project/src/artifacts/api-server/src/db/migrate.ts:6:3)
+2026-07-05T13:55:51.466618723Z     at async <anonymous> (/opt/render/project/src/artifacts/api-server/src/index.ts:21:1) {
+2026-07-05T13:55:51.466622383Z   code: 'ECONNREFUSED',
+2026-07-05T13:55:51.466625213Z   [errors]: [
+2026-07-05T13:55:51.466629173Z     Error: connect ECONNREFUSED ::1:5432
+2026-07-05T13:55:51.466632523Z         at createConnectionError (node:net:1686:14)
+2026-07-05T13:55:51.466635513Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T13:55:51.466638374Z       errno: -111,
+2026-07-05T13:55:51.466641114Z       code: 'ECONNREFUSED',
+2026-07-05T13:55:51.466643814Z       syscall: 'connect',
+2026-07-05T13:55:51.466647014Z       address: '::1',
+2026-07-05T13:55:51.466649984Z       port: 5432
+2026-07-05T13:55:51.466652814Z     },
+2026-07-05T13:55:51.466655704Z     Error: connect ECONNREFUSED 127.0.0.1:5432
+2026-07-05T13:55:51.466658654Z         at createConnectionError (node:net:1686:14)
+2026-07-05T13:55:51.466661434Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T13:55:51.466664334Z       errno: -111,
+2026-07-05T13:55:51.466667184Z       code: 'ECONNREFUSED',
+2026-07-05T13:55:51.466669954Z       syscall: 'connect',
+2026-07-05T13:55:51.466672594Z       address: '127.0.0.1',
+2026-07-05T13:55:51.466675174Z       port: 5432
+2026-07-05T13:55:51.466678044Z     }
+2026-07-05T13:55:51.466680804Z   ]
+2026-07-05T13:55:51.466683604Z }
+2026-07-05T13:55:51.466686104Z 
+2026-07-05T13:55:51.466688844Z Node.js v24.14.1

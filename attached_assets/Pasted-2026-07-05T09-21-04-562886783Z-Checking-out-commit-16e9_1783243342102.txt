@@ -1,0 +1,50 @@
+2026-07-05T09:21:04.562886783Z ==> Checking out commit 16e9667917c852a33991d248b553ca45efb46ab5 in branch main
+2026-07-05T09:21:11.086674238Z ==> Downloaded 119MB in 6s. Extraction took 6s.
+2026-07-05T09:21:15.800869576Z ==> Using Node.js version 24.14.1 (default)
+2026-07-05T09:21:15.800880877Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-07-05T09:21:15.848201526Z ==> Running build command 'pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build'...
+2026-07-05T09:21:17.83049719Z 
+2026-07-05T09:21:17.830554413Z > @workspace/api-server@0.0.0 build /opt/render/project/src/artifacts/api-server
+2026-07-05T09:21:17.830571224Z > node ./build.mjs
+2026-07-05T09:21:17.830574204Z 
+2026-07-05T09:21:25.659196509Z ==> Uploading build...
+2026-07-05T09:21:33.980138416Z ==> Uploaded in 4.1s. Compression took 4.3s
+2026-07-05T09:21:34.010782603Z ==> Build successful 🎉
+2026-07-05T09:21:36.449622221Z ==> Deploying...
+2026-07-05T09:21:36.522071117Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-07-05T09:21:54.654024706Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T09:21:56.542145305Z /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45
+2026-07-05T09:21:56.542178716Z     Error.captureStackTrace(err)
+2026-07-05T09:21:56.542183346Z           ^
+2026-07-05T09:21:56.542186826Z 
+2026-07-05T09:21:56.542190846Z AggregateError [ECONNREFUSED]: 
+2026-07-05T09:21:56.542195027Z     at /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11
+2026-07-05T09:21:56.542202397Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-07-05T09:21:56.542204887Z     at async runMigrations (/opt/render/project/src/artifacts/api-server/src/db/migrate.ts:6:3)
+2026-07-05T09:21:56.542208307Z     at async <anonymous> (/opt/render/project/src/artifacts/api-server/src/index.ts:21:1) {
+2026-07-05T09:21:56.542213537Z   code: 'ECONNREFUSED',
+2026-07-05T09:21:56.542217297Z   [errors]: [
+2026-07-05T09:21:56.542221927Z     Error: connect ECONNREFUSED ::1:5432
+2026-07-05T09:21:56.542226297Z         at createConnectionError (node:net:1686:14)
+2026-07-05T09:21:56.542229738Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T09:21:56.542233578Z       errno: -111,
+2026-07-05T09:21:56.542237578Z       code: 'ECONNREFUSED',
+2026-07-05T09:21:56.542240268Z       syscall: 'connect',
+2026-07-05T09:21:56.542242608Z       address: '::1',
+2026-07-05T09:21:56.542244958Z       port: 5432
+2026-07-05T09:21:56.542247308Z     },
+2026-07-05T09:21:56.542249788Z     Error: connect ECONNREFUSED 127.0.0.1:5432
+2026-07-05T09:21:56.542252198Z         at createConnectionError (node:net:1686:14)
+2026-07-05T09:21:56.542255058Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T09:21:56.542259188Z       errno: -111,
+2026-07-05T09:21:56.542263018Z       code: 'ECONNREFUSED',
+2026-07-05T09:21:56.542266579Z       syscall: 'connect',
+2026-07-05T09:21:56.542270148Z       address: '127.0.0.1',
+2026-07-05T09:21:56.542273248Z       port: 5432
+2026-07-05T09:21:56.542276159Z     }
+2026-07-05T09:21:56.542279509Z   ]
+2026-07-05T09:21:56.542282989Z }
+2026-07-05T09:21:56.542286499Z 
+2026-07-05T09:21:56.542290279Z Node.js v24.14.1
+2026-07-05T09:21:57.705546274Z ==> Exited with status 1
+2026-07-05T09:21:57.708635991Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

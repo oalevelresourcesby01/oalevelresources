@@ -1,0 +1,38 @@
+2026-07-05T09:14:43.718195613Z ==> Deploying...
+2026-07-05T09:14:43.797002363Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-07-05T09:15:02.812436331Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T09:15:05.215060582Z file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:11
+2026-07-05T09:15:05.215083293Z   throw Error('Dynamic require of "' + x + '" is not supported');
+2026-07-05T09:15:05.215088173Z         ^
+2026-07-05T09:15:05.215090423Z 
+2026-07-05T09:15:05.215093123Z Error: Dynamic require of "events" is not supported
+2026-07-05T09:15:05.215095153Z     at file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:11:9
+2026-07-05T09:15:05.215098093Z     at ../../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js (/opt/render/project/src/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js:1:22)
+2026-07-05T09:15:05.215101934Z     at __require2 (file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:17:50)
+2026-07-05T09:15:05.215104474Z     at ../../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/index.js (/opt/render/project/src/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/index.js:3:16)
+2026-07-05T09:15:05.215106504Z     at __require2 (file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:17:50)
+2026-07-05T09:15:05.215109174Z     at <anonymous> (/opt/render/project/src/node_modules/.pnpm/pg@8.22.0/node_modules/pg/esm/index.mjs:2:16)
+2026-07-05T09:15:05.215111054Z     at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+2026-07-05T09:15:05.215112954Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+2026-07-05T09:15:05.215114785Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+2026-07-05T09:15:05.215116585Z 
+2026-07-05T09:15:05.215118585Z Node.js v24.14.1
+2026-07-05T09:15:09.54434635Z ==> Exited with status 1
+2026-07-05T09:15:09.546466815Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2026-07-05T09:15:14.495707317Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T09:15:17.189550126Z file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:11
+2026-07-05T09:15:17.189570327Z   throw Error('Dynamic require of "' + x + '" is not supported');
+2026-07-05T09:15:17.189573937Z         ^
+2026-07-05T09:15:17.189576807Z 
+2026-07-05T09:15:17.189580818Z Error: Dynamic require of "events" is not supported
+2026-07-05T09:15:17.189584248Z     at file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:11:9
+2026-07-05T09:15:17.189588478Z     at ../../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js (/opt/render/project/src/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/client.js:1:22)
+2026-07-05T09:15:17.189593878Z     at __require2 (file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:17:50)
+2026-07-05T09:15:17.189597459Z     at ../../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/index.js (/opt/render/project/src/node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/index.js:3:16)
+2026-07-05T09:15:17.189600439Z     at __require2 (file:///opt/render/project/src/artifacts/api-server/dist/index.mjs:17:50)
+2026-07-05T09:15:17.189604609Z     at <anonymous> (/opt/render/project/src/node_modules/.pnpm/pg@8.22.0/node_modules/pg/esm/index.mjs:2:16)
+2026-07-05T09:15:17.189607619Z     at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+2026-07-05T09:15:17.189610439Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+2026-07-05T09:15:17.18961346Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+2026-07-05T09:15:17.18962428Z 
+2026-07-05T09:15:17.18962757Z Node.js v24.14.1

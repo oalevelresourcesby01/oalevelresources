@@ -1,0 +1,50 @@
+2026-07-05T09:21:56.542247308Z     },
+2026-07-05T09:21:56.542249788Z     Error: connect ECONNREFUSED 127.0.0.1:5432
+2026-07-05T09:21:56.542252198Z         at createConnectionError (node:net:1686:14)
+2026-07-05T09:21:56.542255058Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T09:21:56.542259188Z       errno: -111,
+2026-07-05T09:21:56.542263018Z       code: 'ECONNREFUSED',
+2026-07-05T09:21:56.542266579Z       syscall: 'connect',
+2026-07-05T09:21:56.542270148Z       address: '127.0.0.1',
+2026-07-05T09:21:56.542273248Z       port: 5432
+2026-07-05T09:21:56.542276159Z     }
+2026-07-05T09:21:56.542279509Z   ]
+2026-07-05T09:21:56.542282989Z }
+2026-07-05T09:21:56.542286499Z 
+2026-07-05T09:21:56.542290279Z Node.js v24.14.1
+2026-07-05T09:21:57.705546274Z ==> Exited with status 1
+2026-07-05T09:21:57.708635991Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2026-07-05T09:22:02.091166476Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T09:22:04.294964716Z /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45
+2026-07-05T09:22:04.294999907Z     Error.captureStackTrace(err)
+2026-07-05T09:22:04.295003587Z           ^
+2026-07-05T09:22:04.295006577Z 
+2026-07-05T09:22:04.295009137Z AggregateError [ECONNREFUSED]: 
+2026-07-05T09:22:04.295011777Z     at /opt/render/project/src/node_modules/.pnpm/pg-pool@3.14.0_pg@8.22.0/node_modules/pg-pool/index.js:45:11
+2026-07-05T09:22:04.295016987Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-07-05T09:22:04.295019907Z     at async runMigrations (/opt/render/project/src/artifacts/api-server/src/db/migrate.ts:6:3)
+2026-07-05T09:22:04.295022607Z     at async <anonymous> (/opt/render/project/src/artifacts/api-server/src/index.ts:21:1) {
+2026-07-05T09:22:04.295026037Z   code: 'ECONNREFUSED',
+2026-07-05T09:22:04.295028497Z   [errors]: [
+2026-07-05T09:22:04.295032477Z     Error: connect ECONNREFUSED ::1:5432
+2026-07-05T09:22:04.295039877Z         at createConnectionError (node:net:1686:14)
+2026-07-05T09:22:04.295042988Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T09:22:04.295046138Z       errno: -111,
+2026-07-05T09:22:04.295048588Z       code: 'ECONNREFUSED',
+2026-07-05T09:22:04.295051128Z       syscall: 'connect',
+2026-07-05T09:22:04.295053938Z       address: '::1',
+2026-07-05T09:22:04.295056588Z       port: 5432
+2026-07-05T09:22:04.295058998Z     },
+2026-07-05T09:22:04.295061948Z     Error: connect ECONNREFUSED 127.0.0.1:5432
+2026-07-05T09:22:04.295064588Z         at createConnectionError (node:net:1686:14)
+2026-07-05T09:22:04.295066798Z         at afterConnectMultiple (node:net:1716:16) {
+2026-07-05T09:22:04.295069528Z       errno: -111,
+2026-07-05T09:22:04.295072158Z       code: 'ECONNREFUSED',
+2026-07-05T09:22:04.295074348Z       syscall: 'connect',
+2026-07-05T09:22:04.295076629Z       address: '127.0.0.1',
+2026-07-05T09:22:04.295079258Z       port: 5432
+2026-07-05T09:22:04.295081898Z     }
+2026-07-05T09:22:04.295084319Z   ]
+2026-07-05T09:22:04.295086689Z }
+2026-07-05T09:22:04.295088809Z 
+2026-07-05T09:22:04.295091229Z Node.js v24.14.1

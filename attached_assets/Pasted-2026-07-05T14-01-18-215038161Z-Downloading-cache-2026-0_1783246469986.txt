@@ -1,0 +1,41 @@
+2026-07-05T14:01:18.215038161Z ==> Downloading cache...
+2026-07-05T14:01:18.253584419Z ==> Cloning from https://github.com/oalevelresourcesby01/oalevelresources
+2026-07-05T14:01:19.256466339Z ==> Checking out commit e9c6965dea2f0557d3347bddc9a98d430264b802 in branch main
+2026-07-05T14:01:25.499375628Z ==> Downloaded 119MB in 1s. Extraction took 6s.
+2026-07-05T14:01:29.547661491Z ==> Using Node.js version 24.14.1 (default)
+2026-07-05T14:01:29.547676931Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-07-05T14:01:29.592012031Z ==> Running build command 'pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build'...
+2026-07-05T14:01:31.704545376Z 
+2026-07-05T14:01:31.704575377Z > @workspace/api-server@0.0.0 build /opt/render/project/src/artifacts/api-server
+2026-07-05T14:01:31.704587527Z > node ./build.mjs
+2026-07-05T14:01:31.704592267Z 
+2026-07-05T14:01:32.360712046Z ==> Uploading build...
+2026-07-05T14:01:40.121863794Z ==> Uploaded in 4.0s. Compression took 3.8s
+2026-07-05T14:01:40.145872234Z ==> Build successful 🎉
+2026-07-05T14:01:42.370186636Z ==> Deploying...
+2026-07-05T14:01:42.476797201Z ==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+2026-07-05T14:02:01.001448913Z ==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+2026-07-05T14:02:03.204684548Z (node:70) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+2026-07-05T14:02:03.204740922Z In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+2026-07-05T14:02:03.204744562Z 
+2026-07-05T14:02:03.204748343Z To prepare for this change:
+2026-07-05T14:02:03.204752013Z - If you want the current behavior, explicitly use 'sslmode=verify-full'
+2026-07-05T14:02:03.204755233Z - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+2026-07-05T14:02:03.204758214Z 
+2026-07-05T14:02:03.204762224Z See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+2026-07-05T14:02:03.204765154Z (Use `node --trace-warnings ...` to show where the warning was created)
+2026-07-05T14:02:06.160674485Z [db] PostgreSQL migrations complete
+2026-07-05T14:02:06.237404014Z {"level":30,"time":1783260126236,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","port":10000,"msg":"Server listening"}
+2026-07-05T14:02:06.268014766Z {"level":30,"time":1783260126267,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","req":{"id":1,"method":"HEAD","url":"/"},"res":{"statusCode":404},"responseTime":4,"msg":"request completed"}
+2026-07-05T14:02:13.063495042Z {"level":30,"time":1783260133061,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","req":{"id":2,"method":"HEAD","url":"/"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+2026-07-05T14:02:13.282991241Z ==> Your service is live 🎉
+2026-07-05T14:02:13.333308723Z {"level":30,"time":1783260133333,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","req":{"id":3,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+2026-07-05T14:02:13.389260246Z {"level":30,"time":1783260133389,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","req":{"id":4,"method":"GET","url":"/favicon.ico"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
+2026-07-05T14:02:13.441350076Z ==> 
+2026-07-05T14:02:13.443466875Z ==> ///////////////////////////////////////////////////////////
+2026-07-05T14:02:13.44582094Z ==> 
+2026-07-05T14:02:13.448142794Z ==> Available at your primary URL https://oalevelresources.onrender.com
+2026-07-05T14:02:13.45054124Z ==> 
+2026-07-05T14:02:13.452900525Z ==> ///////////////////////////////////////////////////////////
+2026-07-05T14:02:13.50088866Z {"level":30,"time":1783260133500,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","req":{"id":5,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":0,"msg":"request completed"}
+2026-07-05T14:02:22.18734965Z {"level":30,"time":1783260142187,"pid":70,"hostname":"srv-d951sfgjs32c73f9kie0-hibernate-696d86fb48-7r2w7","req":{"id":6,"method":"GET","url":"/"},"res":{"statusCode":404},"responseTime":1,"msg":"request completed"}
