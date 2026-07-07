@@ -63,8 +63,10 @@ async function downloadPdf(driveId: string, apiKey: string): Promise<Buffer> {
 
 async function extractText(buffer: Buffer): Promise<string> {
   try {
+    // Import from the internal lib path to avoid pdf-parse v1's broken index.js,
+    // which tries to read a test file from the current working directory on import.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod = (await import("pdf-parse")) as any;
+    const mod = (await import("pdf-parse/lib/pdf-parse.js")) as any;
     const pdfParse: (b: Buffer) => Promise<{ text: string }> =
       typeof mod.default === "function" ? mod.default : mod;
     const data = await pdfParse(buffer);
