@@ -92,20 +92,22 @@ export default function DriveConfig() {
     // Let's assume validation requires the key if changing. If not changing, we can still try to validate if backend allows, but let's pass a dummy or require it.
     // Looking at schema: DriveValidateInput { driveApiKey: string; rootFolderId: string; }
     
-    if (!formData.driveApiKey && !config?.driveApiKeySet) {
-       toast({ variant: 'destructive', title: 'Validation failed', description: 'API Key is required for first time setup.' });
-       return;
+    if (!formData.driveApiKey) {
+      if (!config?.driveApiKeySet) {
+        toast({ variant: 'destructive', title: 'Validation failed', description: 'API Key is required for first time setup.' });
+        return;
+      }
+      // Key is already saved server-side; to validate against it the user must re-enter it.
+      toast({ variant: 'destructive', title: 'Re-enter API Key to validate', description: 'Your API Key is saved but masked. Enter it again to test a new Folder ID.' });
+      return;
     }
 
     setIsValidating(true);
     setValidationResult(null);
     try {
-      // If no new key is provided but one is set, we can't send empty string to validate API. 
-      // The user needs to re-enter it to validate a new folder, or the backend handles it.
-      // Actually, if we just want to save, they can save. Validation here might need the actual key.
       const res = await validateDrive.mutateAsync({
         data: {
-          driveApiKey: formData.driveApiKey || 'USE_SAVED_KEY', // Backend might need handling for this
+          driveApiKey: formData.driveApiKey,
           rootFolderId: formData.driveRootFolderId
         }
       });
@@ -337,7 +339,7 @@ export default function DriveConfig() {
                     <div key={record.id} className="flex items-start justify-between border-b border-border/50 pb-4 last:border-0 last:pb-0">
                       <div>
                         <div className="flex items-center space-x-2">
-                          {record.status === 'completed' ? (
+                          {record.status === 'success' ? (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                           ) : record.status === 'error' ? (
                             <XCircle className="h-4 w-4 text-destructive" />

@@ -114,7 +114,7 @@ export default function AiSettings() {
 
   const handleClearChat = async () => {
     try {
-      await clearSession.mutateAsync({ data: { sessionId } } as any); // Type assertion needed if schema doesn't match exactly
+      await clearSession.mutateAsync({ sessionId });
     } catch (e) {} // ignore errors on clear
     setMessages([]);
   };
