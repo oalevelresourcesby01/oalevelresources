@@ -14,6 +14,7 @@ export * from './aiMessage';
 export * from './aiMessageRole';
 export * from './aiModel';
 export * from './aiReply';
+export * from './aiReplyRelatedResourcesItem';
 export * from './announcement';
 export * from './announcementInput';
 export * from './announcementUpdate';

@@ -255,12 +255,17 @@ export interface AiChatInput {
     /** @nullable */
     pdfText?: string | null;
 }
+export type AiReplyRelatedResourcesItem = {
+    resourceId: string;
+    resourceName: string;
+};
 export interface AiReply {
     reply: string;
     sessionId: string;
     model?: string;
     /** @nullable */
     tokens?: number | null;
+    relatedResources?: AiReplyRelatedResourcesItem[];
 }
 export type AiMessageRole = typeof AiMessageRole[keyof typeof AiMessageRole];
 export declare const AiMessageRole: {

@@ -5,11 +5,13 @@
  * O/A Level Resources API
  * OpenAPI spec version: 1.0.0
  */
+import type { AiReplyRelatedResourcesItem } from './aiReplyRelatedResourcesItem';
 export interface AiReply {
     reply: string;
     sessionId: string;
     model?: string;
     /** @nullable */
     tokens?: number | null;
+    relatedResources?: AiReplyRelatedResourcesItem[];
 }
 //# sourceMappingURL=aiReply.d.ts.map

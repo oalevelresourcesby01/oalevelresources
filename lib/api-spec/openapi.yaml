@@ -1177,6 +1177,16 @@ components:
           type: string
         tokens:
           type: ["integer", "null"]
+        relatedResources:
+          type: array
+          items:
+            type: object
+            required: [resourceId, resourceName]
+            properties:
+              resourceId:
+                type: string
+              resourceName:
+                type: string
 
     AiMessage:
       type: object

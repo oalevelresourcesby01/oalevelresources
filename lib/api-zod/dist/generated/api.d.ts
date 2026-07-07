@@ -1177,16 +1177,34 @@ export declare const AiChatResponse: zod.ZodObject<{
     sessionId: zod.ZodString;
     model: zod.ZodOptional<zod.ZodString>;
     tokens: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
+    relatedResources: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+        resourceId: zod.ZodString;
+        resourceName: zod.ZodString;
+    }, "strip", zod.ZodTypeAny, {
+        resourceId: string;
+        resourceName: string;
+    }, {
+        resourceId: string;
+        resourceName: string;
+    }>, "many">>;
 }, "strip", zod.ZodTypeAny, {
     sessionId: string;
     reply: string;
     model?: string | undefined;
     tokens?: number | null | undefined;
+    relatedResources?: {
+        resourceId: string;
+        resourceName: string;
+    }[] | undefined;
 }, {
     sessionId: string;
     reply: string;
     model?: string | undefined;
     tokens?: number | null | undefined;
+    relatedResources?: {
+        resourceId: string;
+        resourceName: string;
+    }[] | undefined;
 }>;
 /**
  * @summary Get messages in a session

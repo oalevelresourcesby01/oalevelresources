@@ -5,6 +5,7 @@
  * O/A Level Resources API
  * OpenAPI spec version: 1.0.0
  */
+import type { AiReplyRelatedResourcesItem } from './aiReplyRelatedResourcesItem';
 
 export interface AiReply {
   reply: string;
@@ -12,4 +13,5 @@ export interface AiReply {
   model?: string;
   /** @nullable */
   tokens?: number | null;
+  relatedResources?: AiReplyRelatedResourcesItem[];
 }

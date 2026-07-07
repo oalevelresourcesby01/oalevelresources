@@ -111,7 +111,7 @@ export default function AiSettings() {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: response.reply,
-        relatedResources: (response as any).relatedResources ?? [],
+        relatedResources: response.relatedResources ?? [],
       }]);
     } catch (error: any) {
       toast({

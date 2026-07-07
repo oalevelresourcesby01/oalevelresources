@@ -500,7 +500,11 @@ export const AiChatResponse = zod.object({
   "reply": zod.string(),
   "sessionId": zod.string(),
   "model": zod.string().optional(),
-  "tokens": zod.number().nullish()
+  "tokens": zod.number().nullish(),
+  "relatedResources": zod.array(zod.object({
+  "resourceId": zod.string(),
+  "resourceName": zod.string()
+})).optional()
 })
 
 
