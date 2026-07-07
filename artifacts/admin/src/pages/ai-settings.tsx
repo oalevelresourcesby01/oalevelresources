@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Bot, Send, Trash2, User, Eye, EyeOff, Save, RefreshCw } from 'lucide-react';
+import { Bot, Send, Trash2, User, Eye, EyeOff, Save, RefreshCw, FileText } from 'lucide-react';
 import {
   useGetAdminConfig,
   useUpdateAdminConfig,
@@ -40,7 +42,11 @@ export default function AiSettings() {
   // Chat State
   const [sessionId] = useState(generateSessionId);
   const [chatInput, setChatInput] = useState('');
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant' | 'system', content: string }[]>([]);
+  const [messages, setMessages] = useState<{
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    relatedResources?: { resourceId: string; resourceName: string }[];
+  }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,7 +108,11 @@ export default function AiSettings() {
         }
       });
       
-      setMessages(prev => [...prev, { role: 'assistant', content: response.reply }]);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: response.reply,
+        relatedResources: (response as any).relatedResources ?? [],
+      }]);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -239,12 +249,43 @@ export default function AiSettings() {
               ) : (
                 messages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`flex max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className={`flex max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                       <div className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-primary text-primary-foreground ml-3' : 'bg-muted text-muted-foreground mr-3'}`}>
                         {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                       </div>
-                      <div className={`rounded-lg p-3 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card border border-border/50 shadow-sm'}`}>
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className={`rounded-lg p-3 text-sm ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card border border-border/50 shadow-sm'}`}>
+                          {msg.role === 'user' ? (
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                          ) : (
+                            <div className="prose prose-sm dark:prose-invert max-w-none
+                              [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
+                              [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5
+                              [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm
+                              [&_h3]:text-sm [&_code]:text-xs [&_code]:bg-muted
+                              [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded
+                              [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded
+                              [&_strong]:font-semibold [&_a]:text-primary">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
+                          )}
+                        </div>
+                        {/* PDF source references */}
+                        {msg.role === 'assistant' && msg.relatedResources && msg.relatedResources.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 px-1">
+                            {msg.relatedResources.map((r) => (
+                              <span
+                                key={r.resourceId}
+                                className="inline-flex items-center gap-1 text-xs bg-muted/70 border border-border/60 text-muted-foreground rounded-full px-2 py-0.5"
+                              >
+                                <FileText className="h-3 w-3 shrink-0" />
+                                {r.resourceName}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

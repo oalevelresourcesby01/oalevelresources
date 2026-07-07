@@ -60,9 +60,16 @@ export async function sendAiMessage(
   if (knowledgeContext) {
     allMessages.push({
       role: "system",
-      content: `RELEVANT EDUCATIONAL RESOURCES (use these as your primary source):\n\n${knowledgeContext}\n\nBase your answer on the above resources where possible. Always mention which resource(s) you used.`,
+      content: `RELEVANT EDUCATIONAL RESOURCES (use these as your primary source):\n\n${knowledgeContext}\n\nBase your answer on the above resources where possible. Always cite which resource(s) you used by name (e.g. "According to [Resource Name]...").`,
     });
   }
+
+  // Formatting instruction — always present so responses render well in the app
+  allMessages.push({
+    role: "system",
+    content:
+      "Format your responses using Markdown: use **bold** for key terms, bullet points or numbered lists for multi-step explanations, and clear headings where helpful. Keep answers well-structured and easy to read.",
+  });
 
   // Prepare messages with optional image/PDF context
   const processedMessages = messages.map((msg, i) => {
