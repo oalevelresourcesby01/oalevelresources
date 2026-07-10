@@ -49,6 +49,8 @@ export interface PublicConfig {
     aiSystemPrompt?: string;
     aiModel?: string;
     theme?: string;
+    /** @nullable */
+    androidDownloadUrl?: string | null;
 }
 export interface AdminConfig {
     appName?: string;
@@ -69,6 +71,8 @@ export interface AdminConfig {
     maxDownloadSizeMb?: number;
     openRouterApiKeySet?: boolean;
     driveApiKeySet?: boolean;
+    /** @nullable */
+    androidDownloadUrl?: string | null;
 }
 export interface AdminConfigUpdate {
     appName?: string;
@@ -91,6 +95,7 @@ export interface AdminConfigUpdate {
     cacheEnabled?: boolean;
     cacheTtlMinutes?: number;
     maxDownloadSizeMb?: number;
+    androidDownloadUrl?: string;
 }
 export interface Announcement {
     id: string;

@@ -6,11 +6,13 @@ import android.provider.OpenableColumns
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -321,6 +323,24 @@ private fun ChatBubble(message: ChatMessage) {
 
 @Composable
 private fun ThinkingBubble() {
+    val infiniteTransition = rememberInfiniteTransition(label = "typing")
+    val jumpSpec = infiniteRepeatable<Float>(
+        animation = keyframes {
+            durationMillis = 900
+            0f at 0 using LinearEasing
+            (-8f) at 220 using LinearEasing
+            0f at 440 using LinearEasing
+            0f at 900 using LinearEasing
+        },
+        repeatMode = RepeatMode.Restart
+    )
+    val dot1 by infiniteTransition.animateFloat(0f, 0f,
+        animationSpec = jumpSpec.copy(initialStartOffset = StartOffset(0)), label = "d1")
+    val dot2 by infiniteTransition.animateFloat(0f, 0f,
+        animationSpec = jumpSpec.copy(initialStartOffset = StartOffset(150)), label = "d2")
+    val dot3 by infiniteTransition.animateFloat(0f, 0f,
+        animationSpec = jumpSpec.copy(initialStartOffset = StartOffset(300)), label = "d3")
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -332,14 +352,19 @@ private fun ThinkingBubble() {
             modifier = Modifier
                 .clip(RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(12.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                repeat(3) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(6.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 2.dp
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                for (offset in listOf(dot1, dot2, dot3)) {
+                    Box(
+                        modifier = Modifier
+                            .size(9.dp)
+                            .offset(y = offset.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.75f))
                     )
                 }
             }

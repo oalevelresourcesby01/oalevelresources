@@ -105,11 +105,15 @@ router.post("/ai/chat", async (req, res) => {
 
   let boundedPdfText = pdfText;
   if (boundedPdfText !== undefined) {
-    if (typeof boundedPdfText !== "string" || boundedPdfText.length === 0) {
+    if (typeof boundedPdfText !== "string") {
       res.status(400).json({ error: "pdfText is invalid" });
       return;
     }
-    if (boundedPdfText.length > MAX_PDF_TEXT_CHARS) {
+    if (boundedPdfText.length === 0) {
+      // Empty string means no extractable text (e.g. scanned/image-only PDF).
+      // Treat as no attachment rather than an error so the AI can still reply.
+      boundedPdfText = undefined;
+    } else if (boundedPdfText.length > MAX_PDF_TEXT_CHARS) {
       boundedPdfText = boundedPdfText.slice(0, MAX_PDF_TEXT_CHARS);
     }
   }

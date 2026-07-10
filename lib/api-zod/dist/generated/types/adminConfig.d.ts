@@ -24,5 +24,7 @@ export interface AdminConfig {
     maxDownloadSizeMb?: number;
     openRouterApiKeySet?: boolean;
     driveApiKeySet?: boolean;
+    /** @nullable */
+    androidDownloadUrl?: string | null;
 }
 //# sourceMappingURL=adminConfig.d.ts.map

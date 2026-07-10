@@ -803,6 +803,8 @@ components:
           type: string
         theme:
           type: string
+        androidDownloadUrl:
+          type: ["string", "null"]
 
     AdminConfig:
       type: object
@@ -843,6 +845,8 @@ components:
           type: boolean
         driveApiKeySet:
           type: boolean
+        androidDownloadUrl:
+          type: ["string", "null"]
 
     AdminConfigUpdate:
       type: object
@@ -883,6 +887,8 @@ components:
           type: integer
         maxDownloadSizeMb:
           type: integer
+        androidDownloadUrl:
+          type: string
 
     # ANNOUNCEMENTS
     Announcement:

@@ -21,6 +21,7 @@ export default function Settings() {
     aboutUs: '',
     contactEmail: '',
     contactPhone: '',
+    androidDownloadUrl: '',
     maintenanceMode: false,
     theme: 'light',
     cacheEnabled: true,
@@ -48,6 +49,7 @@ export default function Settings() {
         aboutUs: config.aboutUs || '',
         contactEmail: config.contactEmail || '',
         contactPhone: config.contactPhone || '',
+        androidDownloadUrl: (config as any).androidDownloadUrl || '',
         maintenanceMode: config.maintenanceMode || false,
         theme: config.theme || 'light',
         cacheEnabled: config.cacheEnabled !== false, // default true
@@ -167,6 +169,23 @@ export default function Settings() {
                   value={formData.whatsappChannel}
                   onChange={(e) => setFormData({ ...formData, whatsappChannel: e.target.value })}
                   placeholder="https://whatsapp.com/channel/..."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="androidDownloadUrl">Android App Download Link</Label>
+              <p className="text-xs text-muted-foreground">
+                When set, a "Download Android App" button appears on the public website homepage.
+              </p>
+              <div className="relative">
+                <Smartphone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="androidDownloadUrl"
+                  className="pl-9"
+                  value={formData.androidDownloadUrl}
+                  onChange={(e) => setFormData({ ...formData, androidDownloadUrl: e.target.value })}
+                  placeholder="https://drive.google.com/file/d/..."
                 />
               </div>
             </div>

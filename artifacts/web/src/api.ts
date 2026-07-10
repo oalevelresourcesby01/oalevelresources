@@ -6,6 +6,23 @@ async function jget<T>(url: string): Promise<T> {
   return res.json();
 }
 
+export interface PublicConfig {
+  appName?: string;
+  whatsappChannel?: string;
+  androidDownloadUrl?: string | null;
+  aiEnabled?: boolean;
+  maintenanceMode?: boolean;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  active: boolean;
+  priority?: number;
+  createdAt: string;
+}
+
 export interface ResourceNode {
   id: string;
   driveId: string;
@@ -29,6 +46,8 @@ export interface Stats {
 }
 
 export const api = {
+  config: () => jget<PublicConfig>(`${BASE}/config`),
+  announcements: () => jget<Announcement[]>(`${BASE}/announcements?active=true`),
   levels: () => jget<ResourceNode[]>(`${BASE}/resources/levels`),
   stats: () => jget<Stats>(`${BASE}/resources/stats`),
   node: (id: string) => jget<ResourceNode>(`${BASE}/resources/nodes/${id}`),

@@ -18,6 +18,7 @@ router.get("/config", async (req, res) => {
     aiSystemPrompt: cfg.aiSystemPrompt,
     aiModel: cfg.aiModel,
     theme: cfg.theme,
+    androidDownloadUrl: cfg.androidDownloadUrl ?? null,
   });
 });
 
@@ -43,6 +44,7 @@ router.get("/config/admin", requireAuth, async (req, res) => {
     maxDownloadSizeMb: parseInt(cfg.maxDownloadSizeMb || "100", 10),
     openRouterApiKeySet: !!cfg.openRouterApiKey,
     driveApiKeySet: !!cfg.driveApiKey,
+    androidDownloadUrl: cfg.androidDownloadUrl ?? null,
   });
 });
 
@@ -70,6 +72,7 @@ router.put("/config/admin", requireAuth, async (req, res) => {
   if (typeof body.cacheEnabled === "boolean") updates.cacheEnabled = String(body.cacheEnabled);
   if (typeof body.cacheTtlMinutes === "number") updates.cacheTtlMinutes = String(body.cacheTtlMinutes);
   if (typeof body.maxDownloadSizeMb === "number") updates.maxDownloadSizeMb = String(body.maxDownloadSizeMb);
+  if (typeof body.androidDownloadUrl === "string") updates.androidDownloadUrl = body.androidDownloadUrl;
 
   await updateManyConfig(updates as any);
 
@@ -93,6 +96,7 @@ router.put("/config/admin", requireAuth, async (req, res) => {
     maxDownloadSizeMb: parseInt(cfg.maxDownloadSizeMb || "100", 10),
     openRouterApiKeySet: !!cfg.openRouterApiKey,
     driveApiKeySet: !!cfg.driveApiKey,
+    androidDownloadUrl: cfg.androidDownloadUrl ?? null,
   });
 });
 

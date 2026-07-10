@@ -16,5 +16,7 @@ export interface PublicConfig {
     aiSystemPrompt?: string;
     aiModel?: string;
     theme?: string;
+    /** @nullable */
+    androidDownloadUrl?: string | null;
 }
 //# sourceMappingURL=publicConfig.d.ts.map

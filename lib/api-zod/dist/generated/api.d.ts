@@ -130,6 +130,7 @@ export declare const GetConfigResponse: zod.ZodObject<{
     aiSystemPrompt: zod.ZodOptional<zod.ZodString>;
     aiModel: zod.ZodOptional<zod.ZodString>;
     theme: zod.ZodOptional<zod.ZodString>;
+    androidDownloadUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
 }, "strip", zod.ZodTypeAny, {
     appName?: string | undefined;
     whatsappChannel?: string | undefined;
@@ -141,6 +142,7 @@ export declare const GetConfigResponse: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | null | undefined;
 }, {
     appName?: string | undefined;
     whatsappChannel?: string | undefined;
@@ -152,6 +154,7 @@ export declare const GetConfigResponse: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | null | undefined;
 }>;
 /**
  * @summary Get full system configuration (admin only)
@@ -175,6 +178,7 @@ export declare const GetAdminConfigResponse: zod.ZodObject<{
     maxDownloadSizeMb: zod.ZodOptional<zod.ZodNumber>;
     openRouterApiKeySet: zod.ZodOptional<zod.ZodBoolean>;
     driveApiKeySet: zod.ZodOptional<zod.ZodBoolean>;
+    androidDownloadUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
 }, "strip", zod.ZodTypeAny, {
     appName?: string | undefined;
     whatsappChannel?: string | undefined;
@@ -186,6 +190,7 @@ export declare const GetAdminConfigResponse: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | null | undefined;
     driveRootFolderId?: string | undefined;
     syncIntervalMinutes?: number | undefined;
     autoSync?: boolean | undefined;
@@ -205,6 +210,7 @@ export declare const GetAdminConfigResponse: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | null | undefined;
     driveRootFolderId?: string | undefined;
     syncIntervalMinutes?: number | undefined;
     autoSync?: boolean | undefined;
@@ -236,6 +242,7 @@ export declare const UpdateAdminConfigBody: zod.ZodObject<{
     cacheEnabled: zod.ZodOptional<zod.ZodBoolean>;
     cacheTtlMinutes: zod.ZodOptional<zod.ZodNumber>;
     maxDownloadSizeMb: zod.ZodOptional<zod.ZodNumber>;
+    androidDownloadUrl: zod.ZodOptional<zod.ZodString>;
 }, "strip", zod.ZodTypeAny, {
     appName?: string | undefined;
     whatsappChannel?: string | undefined;
@@ -247,6 +254,7 @@ export declare const UpdateAdminConfigBody: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | undefined;
     driveRootFolderId?: string | undefined;
     syncIntervalMinutes?: number | undefined;
     autoSync?: boolean | undefined;
@@ -266,6 +274,7 @@ export declare const UpdateAdminConfigBody: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | undefined;
     driveRootFolderId?: string | undefined;
     syncIntervalMinutes?: number | undefined;
     autoSync?: boolean | undefined;
@@ -294,6 +303,7 @@ export declare const UpdateAdminConfigResponse: zod.ZodObject<{
     maxDownloadSizeMb: zod.ZodOptional<zod.ZodNumber>;
     openRouterApiKeySet: zod.ZodOptional<zod.ZodBoolean>;
     driveApiKeySet: zod.ZodOptional<zod.ZodBoolean>;
+    androidDownloadUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
 }, "strip", zod.ZodTypeAny, {
     appName?: string | undefined;
     whatsappChannel?: string | undefined;
@@ -305,6 +315,7 @@ export declare const UpdateAdminConfigResponse: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | null | undefined;
     driveRootFolderId?: string | undefined;
     syncIntervalMinutes?: number | undefined;
     autoSync?: boolean | undefined;
@@ -324,6 +335,7 @@ export declare const UpdateAdminConfigResponse: zod.ZodObject<{
     aiSystemPrompt?: string | undefined;
     aiModel?: string | undefined;
     theme?: string | undefined;
+    androidDownloadUrl?: string | null | undefined;
     driveRootFolderId?: string | undefined;
     syncIntervalMinutes?: number | undefined;
     autoSync?: boolean | undefined;

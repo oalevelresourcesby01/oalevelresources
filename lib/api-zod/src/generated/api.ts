@@ -83,7 +83,8 @@ export const GetConfigResponse = zod.object({
   "aiEnabled": zod.boolean().optional(),
   "aiSystemPrompt": zod.string().optional(),
   "aiModel": zod.string().optional(),
-  "theme": zod.string().optional()
+  "theme": zod.string().optional(),
+  "androidDownloadUrl": zod.string().nullish()
 })
 
 
@@ -108,7 +109,8 @@ export const GetAdminConfigResponse = zod.object({
   "cacheTtlMinutes": zod.number().optional(),
   "maxDownloadSizeMb": zod.number().optional(),
   "openRouterApiKeySet": zod.boolean().optional(),
-  "driveApiKeySet": zod.boolean().optional()
+  "driveApiKeySet": zod.boolean().optional(),
+  "androidDownloadUrl": zod.string().nullish()
 })
 
 
@@ -133,7 +135,8 @@ export const UpdateAdminConfigBody = zod.object({
   "autoSync": zod.boolean().optional(),
   "cacheEnabled": zod.boolean().optional(),
   "cacheTtlMinutes": zod.number().optional(),
-  "maxDownloadSizeMb": zod.number().optional()
+  "maxDownloadSizeMb": zod.number().optional(),
+  "androidDownloadUrl": zod.string().optional()
 })
 
 export const UpdateAdminConfigResponse = zod.object({
@@ -154,7 +157,8 @@ export const UpdateAdminConfigResponse = zod.object({
   "cacheTtlMinutes": zod.number().optional(),
   "maxDownloadSizeMb": zod.number().optional(),
   "openRouterApiKeySet": zod.boolean().optional(),
-  "driveApiKeySet": zod.boolean().optional()
+  "driveApiKeySet": zod.boolean().optional(),
+  "androidDownloadUrl": zod.string().nullish()
 })
 
 

@@ -27,4 +27,5 @@ export interface AdminConfigUpdate {
   cacheEnabled?: boolean;
   cacheTtlMinutes?: number;
   maxDownloadSizeMb?: number;
+  androidDownloadUrl?: string;
 }

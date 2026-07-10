@@ -211,7 +211,11 @@ export default function AiChat() {
         ))}
         {sending && (
           <div className="chat-bubble-row assistant">
-            <div className="chat-bubble assistant">Thinking…</div>
+            <div className="chat-bubble assistant">
+              <div className="typing-dots">
+                <span /><span /><span />
+              </div>
+            </div>
           </div>
         )}
         {error && <div className="empty-state">{error}</div>}
