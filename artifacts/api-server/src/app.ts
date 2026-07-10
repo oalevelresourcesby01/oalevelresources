@@ -25,6 +25,11 @@ const adminDistExists = fs.existsSync(
   path.join(adminDistDir, "index.html"),
 );
 
+// The public-facing website (landing page, browse, search, AI chat for PC/web
+// users) is a separate SPA built from artifacts/web, served at the root path.
+const webDistDir = path.resolve(currentDir, "..", "..", "web", "dist", "public");
+const webDistExists = fs.existsSync(path.join(webDistDir, "index.html"));
+
 // NOTE: runMigrations() and startAutoSync() are called from index.ts
 // with top-level await before this module is used.
 
@@ -68,16 +73,35 @@ if (adminDistExists) {
     res.sendFile(path.join(adminDistDir, "index.html"));
   });
 
-  // Redirect the root to the admin UI for convenience.
-  app.get("/", (_req, res) => {
-    res.redirect("/admin/");
-  });
 } else {
   logger.warn(
     { adminDistDir },
     "Admin frontend build not found — skipping static file serving. " +
       "Run `pnpm --filter @workspace/admin run build` before deploying.",
   );
+}
+
+if (webDistExists) {
+  app.use(express.static(webDistDir));
+
+  // SPA fallback for the public site's client-side routes (react-router).
+  // Registered after /admin and /api so it never shadows them.
+  app.get("/*splat", (req, res, next) => {
+    if (req.path.startsWith("/admin") || req.path.startsWith("/api")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(webDistDir, "index.html"));
+  });
+} else {
+  logger.warn(
+    { webDistDir },
+    "Public web frontend build not found — falling back to redirecting '/' to /admin/. " +
+      "Run `pnpm --filter @workspace/web run build` before deploying.",
+  );
+  app.get("/", (_req, res) => {
+    res.redirect("/admin/");
+  });
 }
 
 // Global error handler — must be registered last, with 4 args, so Express
