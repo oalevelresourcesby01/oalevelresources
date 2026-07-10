@@ -1,10 +1,23 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Search from "./pages/Search";
 import AiChat from "./pages/AiChat";
 
 export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Close menu on route change
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
   return (
     <>
       <nav className="topnav">
@@ -13,13 +26,34 @@ export default function App() {
             <img className="brand-logo" src="/logo.png" alt="O/A Level Resources" />
             <span className="brand-text">O/A Level Resources</span>
           </Link>
+
+          {/* Desktop nav */}
           <div className="nav-links">
             <Link to="/browse">Browse</Link>
             <Link to="/search">Search</Link>
             <Link to="/ai" className="nav-cta">✨ AI Assistant</Link>
           </div>
+
+          {/* Hamburger button — mobile only */}
+          <button
+            className={`hamburger ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+          >
+            <span /><span /><span />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile slide-down menu */}
+      {menuOpen && (
+        <div className="mobile-menu-overlay" onClick={() => setMenuOpen(false)} />
+      )}
+      <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
+        <Link to="/browse" className="mobile-menu-link">📁 Browse Resources</Link>
+        <Link to="/search" className="mobile-menu-link">🔍 Search</Link>
+        <Link to="/ai" className="mobile-menu-link mobile-menu-ai">✨ AI Assistant</Link>
+      </div>
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -36,7 +70,7 @@ export default function App() {
             <div className="footer-title">O/A Level Resources</div>
             <div>
               Free IGCSE, O Level, AS &amp; A2 Level past papers, notes and an AI study assistant.
-              Also available on Android — search "O/A Level Resources".
+              Also available on Android.
             </div>
           </div>
         </div>
