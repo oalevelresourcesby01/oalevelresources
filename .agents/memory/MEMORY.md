@@ -1,3 +1,3 @@
 - [Project overview](project-overview.md) — OAL Resources: Express API + React admin + Android app; Neon PostgreSQL; Google Drive sync; RAG AI via OpenRouter
-- [GitHub push setup](github-push.md) — git remote uses x-access-token PAT in URL; GITHUB_TOKEN secret; push with gitPush() or git push origin main
+- [GitHub auto-sync setup](github-sync.md) — credential helper reads GITHUB_TOKEN from env at push time; post-commit hook + sync.sh for auto-push; never embed token in remote URL
 - [Frontend API contract bugs](frontend-api-bugs.md) — three correctness bugs found + fixed; important for future frontend work

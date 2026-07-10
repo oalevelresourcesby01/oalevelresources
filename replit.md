@@ -14,6 +14,12 @@ bash sync.sh "your commit message"
 
 Every `git commit` also auto-pushes via the `.git/hooks/post-commit` hook.
 
+**First-time setup** (after cloning or Replit restart):
+```bash
+bash setup-git.sh
+```
+This installs the post-commit hook and configures the credential helper. `sync.sh` also runs it automatically if either is missing.
+
 **Auth:** `GITHUB_TOKEN` Replit Secret → read at push time by a git credential helper (never stored in any file) → Render deploys.
 
 ## Run & Operate
