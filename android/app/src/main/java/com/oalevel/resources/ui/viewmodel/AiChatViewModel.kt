@@ -34,7 +34,8 @@ data class AiAttachment(
     val displayName: String,
     val imageBase64: String? = null,
     val pdfText: String? = null,
-    val previewUri: Uri? = null
+    val previewUri: Uri? = null,
+    val isExtracting: Boolean = false
 )
 
 data class AiChatUiState(
@@ -130,7 +131,8 @@ class AiChatViewModel @Inject constructor(
                 attachment = AiAttachment(
                     type = "file",
                     displayName = fileName,
-                    pdfText = null
+                    pdfText = null,
+                    isExtracting = true
                 )
             )
         }
@@ -152,7 +154,7 @@ class AiChatViewModel @Inject constructor(
             }
             _uiState.update { state ->
                 if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
-                    state.copy(attachment = state.attachment.copy(pdfText = pdfText))
+                    state.copy(attachment = state.attachment.copy(pdfText = pdfText, isExtracting = false))
                 } else state
             }
         }
@@ -166,6 +168,10 @@ class AiChatViewModel @Inject constructor(
         val text = _uiState.value.inputText.trim()
         val attachment = _uiState.value.attachment
         if ((text.isBlank() && attachment == null) || _uiState.value.isSending) return
+        if (attachment?.type == "file" && attachment.isExtracting) {
+            _uiState.update { it.copy(error = "Still extracting text from the PDF — please wait a moment.") }
+            return
+        }
 
         val displayText = text.ifBlank {
             when (attachment?.type) {

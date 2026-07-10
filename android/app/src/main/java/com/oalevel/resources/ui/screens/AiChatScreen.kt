@@ -388,13 +388,19 @@ private fun MessageInputBar(
                             }
                         }
                         "file" -> {
-                            Icon(Icons.Filled.PictureAsPdf, null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.error)
+                            if (attachment.isExtracting) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Filled.PictureAsPdf, null,
+                                    modifier = Modifier.size(32.dp),
+                                    tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                     Text(
-                        attachment.displayName,
+                        if (attachment.type == "file" && attachment.isExtracting)
+                            "${attachment.displayName} (reading…)"
+                        else attachment.displayName,
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
@@ -453,7 +459,8 @@ private fun MessageInputBar(
 
                 FilledIconButton(
                     onClick = onSend,
-                    enabled = isEnabled && (text.isNotBlank() || attachment != null)
+                    enabled = isEnabled && (text.isNotBlank() || attachment != null) &&
+                        !(attachment?.type == "file" && attachment.isExtracting)
                 ) {
                     if (isSending) {
                         CircularProgressIndicator(
