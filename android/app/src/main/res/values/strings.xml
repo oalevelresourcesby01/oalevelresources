@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">O/A Level Resources</string>
+    <string name="default_notification_channel_id">downloads</string>
+    <string name="notification_channel_downloads">Downloads</string>
+    <string name="notification_channel_downloads_desc">PDF download progress notifications</string>
+</resources>

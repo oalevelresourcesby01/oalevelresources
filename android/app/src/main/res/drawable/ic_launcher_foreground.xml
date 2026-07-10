@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon foreground — logo scaled to fit with safe-zone inset so the
+     circular/rounded-square launcher mask does not crop the artwork. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+    <item
+        android:top="19.8dp"
+        android:bottom="19.8dp"
+        android:left="19.8dp"
+        android:right="19.8dp">
+        <bitmap
+            android:src="@drawable/ic_splash_logo_img"
+            android:gravity="fill" />
+    </item>
+</layer-list>
