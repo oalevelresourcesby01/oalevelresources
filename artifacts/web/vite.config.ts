@@ -17,4 +17,10 @@ export default defineConfig({
   build: {
     outDir: "dist/public",
   },
+  optimizeDeps: {
+    exclude: ["pdfjs-dist"],
+  },
+  worker: {
+    format: "es",
+  },
 });

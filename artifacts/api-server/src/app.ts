@@ -59,7 +59,9 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
-app.use(express.json({ limit: "10mb" }));
+// 20mb accommodates a ~15MB image/PDF attachment from the AI chat after
+// base64 inflation (~33% larger than the raw file).
+app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);

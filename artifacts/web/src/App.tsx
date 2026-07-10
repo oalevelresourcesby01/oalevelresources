@@ -10,12 +10,13 @@ export default function App() {
       <nav className="topnav">
         <div className="container topnav-inner">
           <Link className="brand" to="/">
-            <span className="brand-badge">📘</span> O/A Level Resources
+            <img className="brand-logo" src="/logo.png" alt="O/A Level Resources" />
+            <span className="brand-text">O/A Level Resources</span>
           </Link>
           <div className="nav-links">
             <Link to="/browse">Browse</Link>
             <Link to="/search">Search</Link>
-            <Link to="/ai">AI Assistant</Link>
+            <Link to="/ai" className="nav-cta">✨ AI Assistant</Link>
           </div>
         </div>
       </nav>
@@ -29,9 +30,15 @@ export default function App() {
       </Routes>
 
       <footer>
-        <div className="container">
-          Free IGCSE, O Level, AS & A2 Level past papers, notes and an AI study assistant.
-          Also available on Android — search "O/A Level Resources".
+        <div className="container footer-inner">
+          <img className="footer-logo" src="/logo.png" alt="O/A Level Resources" />
+          <div>
+            <div className="footer-title">O/A Level Resources</div>
+            <div>
+              Free IGCSE, O Level, AS &amp; A2 Level past papers, notes and an AI study assistant.
+              Also available on Android — search "O/A Level Resources".
+            </div>
+          </div>
         </div>
       </footer>
     </>

@@ -84,6 +84,36 @@ router.post("/ai/chat", async (req, res) => {
     return;
   }
 
+  if (typeof message !== "string" || message.length > 8000) {
+    res.status(400).json({ error: "message must be a string of at most 8000 characters" });
+    return;
+  }
+
+  // Attachments are optional but must be independently bounded server-side —
+  // client-side checks (file size/type) can be bypassed by calling this
+  // endpoint directly, which would otherwise let arbitrarily large payloads
+  // inflate AI prompt size/cost or destabilize the process.
+  const MAX_IMAGE_BASE64_CHARS = 21 * 1024 * 1024; // ~15MB binary, base64-inflated (~33%), plus headroom
+  const MAX_PDF_TEXT_CHARS = 200_000; // plenty for a large document, bounds token usage
+
+  if (imageBase64 !== undefined) {
+    if (typeof imageBase64 !== "string" || imageBase64.length === 0 || imageBase64.length > MAX_IMAGE_BASE64_CHARS) {
+      res.status(400).json({ error: "imageBase64 is invalid or too large" });
+      return;
+    }
+  }
+
+  let boundedPdfText = pdfText;
+  if (boundedPdfText !== undefined) {
+    if (typeof boundedPdfText !== "string" || boundedPdfText.length === 0) {
+      res.status(400).json({ error: "pdfText is invalid" });
+      return;
+    }
+    if (boundedPdfText.length > MAX_PDF_TEXT_CHARS) {
+      boundedPdfText = boundedPdfText.slice(0, MAX_PDF_TEXT_CHARS);
+    }
+  }
+
   const aiEnabled = await getConfig("aiEnabled");
   if (aiEnabled !== "true") {
     res.status(503).json({ error: "AI is currently disabled" });
@@ -131,7 +161,7 @@ router.post("/ai/chat", async (req, res) => {
 
     logAiSearch(message, knowledgeResults.length, relatedResources.map((r) => r.resourceName));
 
-    const result = await sendAiMessage(messages, model, imageBase64, pdfText, knowledgeContext);
+    const result = await sendAiMessage(messages, model, imageBase64, boundedPdfText, knowledgeContext);
 
     // Save assistant message
     await pool.query(

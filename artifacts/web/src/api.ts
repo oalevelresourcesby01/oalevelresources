@@ -41,7 +41,7 @@ export const api = {
     jget<{ results: any[]; total: number }>(
       `${BASE}/search?q=${encodeURIComponent(q)}&page=${page}`
     ),
-  aiChat: (body: { message: string; sessionId: string }) =>
+  aiChat: (body: { message: string; sessionId: string; imageBase64?: string; pdfText?: string }) =>
     fetch(`${BASE}/ai/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

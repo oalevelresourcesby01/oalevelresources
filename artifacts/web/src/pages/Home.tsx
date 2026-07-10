@@ -28,7 +28,10 @@ export default function Home() {
   return (
     <div className="container">
       <section className="hero">
-        <h1>Everything you need for O/A Level, in one place</h1>
+        <div className="hero-eyebrow">📘 Free for every student</div>
+        <h1>
+          Everything you need for <span className="accent">O/A Level</span>, in one place
+        </h1>
         <p>
           Free past papers, notes and revision resources for IGCSE, O Level, AS &amp; A2 Level —
           plus an AI assistant that can explain concepts and solve questions.
