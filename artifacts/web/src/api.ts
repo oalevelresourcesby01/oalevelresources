@@ -66,8 +66,17 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }).then(async (res) => {
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "AI request failed");
-      return data as { reply: string; sessionId: string; relatedResources?: { id: string; name: string }[] };
+      const data = await res.json() as {
+        reply: string;
+        sessionId: string;
+        relatedResources?: { resourceId: string; resourceName: string }[];
+      };
+      if (!res.ok) throw new Error((data as any)?.error || "AI request failed");
+      return {
+        reply: data.reply,
+        sessionId: data.sessionId,
+        // Normalise server field names → display field names
+        relatedResources: data.relatedResources?.map((r) => ({ id: r.resourceId, name: r.resourceName })),
+      };
     }),
 };
