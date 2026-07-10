@@ -14,7 +14,7 @@ bash sync.sh "your commit message"
 
 Every `git commit` also auto-pushes via the `.git/hooks/post-commit` hook.
 
-**Setup:** `GITHUB_TOKEN` secret → embedded in the `origin` remote URL → authenticated push → Render deploys.
+**Auth:** `GITHUB_TOKEN` Replit Secret → read at push time by a git credential helper (never stored in any file) → Render deploys.
 
 ## Run & Operate
 
