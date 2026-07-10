@@ -1,0 +1,155 @@
+/* Android Material 3 — shared tokens */
+:root {
+  --md-primary: #1B5E20;
+  --md-primary-dark: #0d3a10;
+  --md-primary-light: #4CAF50;
+  --md-on-primary: #ffffff;
+  --md-surface: #fafaf5;
+  --md-surface-variant: #f0f0e8;
+  --md-on-surface: #1a1c19;
+  --md-on-surface-variant: #43483f;
+  --md-outline: #73796e;
+  --md-outline-variant: #c3c8bc;
+  --md-error: #ba1a1a;
+  --md-cream: #fafaf5;
+  --md-pdf-red: #C62828;
+  --md-folder-green: #2E7D32;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body, html { background: var(--md-cream); }
+
+.phone-shell {
+  width: 390px;
+  min-height: 844px;
+  background: var(--md-cream);
+  font-family: 'Roboto', 'Google Sans', system-ui, sans-serif;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Status bar */
+.status-bar {
+  height: 28px;
+  background: var(--md-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Top app bar */
+.top-bar {
+  background: var(--md-primary);
+  color: white;
+  padding: 12px 4px 12px 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 56px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.top-bar-title {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 500;
+  padding-left: 4px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.top-bar-subtitle {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.12); }
+.icon-btn svg { width: 22px; height: 22px; fill: white; }
+
+/* Content scroll area */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--md-cream);
+}
+
+/* Nav bar */
+.nav-bar {
+  height: 72px;
+  background: white;
+  border-top: 1px solid var(--md-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-shrink: 0;
+  padding: 0 8px;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  padding: 8px 4px 4px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+.nav-item.active { background: rgba(27,94,32,0.12); }
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item.active svg { fill: var(--md-primary); }
+.nav-item:not(.active) svg { fill: var(--md-on-surface-variant); }
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.nav-item.active .nav-label { color: var(--md-primary); }
+.nav-item:not(.active) .nav-label { color: var(--md-on-surface-variant); }
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--md-outline-variant);
+  font-size: 12px;
+  font-weight: 500;
+  background: white;
+  color: var(--md-on-surface);
+  white-space: nowrap;
+}
+.chip.active {
+  background: var(--md-primary);
+  color: white;
+  border-color: var(--md-primary);
+}
