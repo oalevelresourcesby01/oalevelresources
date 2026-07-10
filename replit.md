@@ -2,6 +2,20 @@
 
 An admin control panel for managing O/A Level educational resources synced from Google Drive.
 
+## GitHub → Render Auto-Deploy
+
+Changes pushed to GitHub automatically trigger a Render.com deploy.
+
+**To sync all changes:**
+```bash
+bash sync.sh "your commit message"
+# or just: bash sync.sh   (uses timestamp as message)
+```
+
+Every `git commit` also auto-pushes via the `.git/hooks/post-commit` hook.
+
+**Setup:** `GITHUB_TOKEN` secret → embedded in the `origin` remote URL → authenticated push → Render deploys.
+
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (via workflow)
