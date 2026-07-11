@@ -31,12 +31,25 @@ interface OpenRouterModelsResponse {
   }[];
 }
 
+// Vision-capable OpenRouter models we can safely fall back to when the
+// configured default model doesn't support image input (most non-vision
+// chat models silently ignore image_url parts or error out, which is why
+// handwritten-answer photos were coming back unread).
+const VISION_MODEL_HINTS = ["gpt-4o", "gpt-4.1", "gemini", "claude-3", "claude-3.5", "claude-3.7", "llama-3.2", "pixtral", "qwen-vl", "vision"];
+const DEFAULT_VISION_MODEL = "openai/gpt-4o-mini";
+
+function supportsVision(modelId: string): boolean {
+  const id = modelId.toLowerCase();
+  return VISION_MODEL_HINTS.some((hint) => id.includes(hint));
+}
+
 export async function sendAiMessage(
   messages: ChatMessage[],
   model?: string,
   imageBase64?: string,
   pdfText?: string,
-  knowledgeContext?: string
+  knowledgeContext?: string,
+  imageMimeType?: string
 ): Promise<{ reply: string; model: string; tokens: number | null }> {
   // Fetch all config values concurrently
   const [apiKey, configModelDefault, systemPrompt] = await Promise.all([
@@ -47,7 +60,15 @@ export async function sendAiMessage(
 
   if (!apiKey) throw new Error("OpenRouter API key not configured");
 
-  const configModel = model || configModelDefault || "openai/gpt-4o-mini";
+  let configModel = model || configModelDefault || DEFAULT_VISION_MODEL;
+
+  // If an image was attached but the selected model has no vision support,
+  // switch to a known vision-capable model for this request rather than
+  // silently sending an image the model can't see (this was the "can't OCR
+  // handwritten answers" bug — the text-only model just ignored the image).
+  if (imageBase64 && !supportsVision(configModel)) {
+    configModel = DEFAULT_VISION_MODEL;
+  }
 
   const allMessages: ChatMessage[] = [];
 
@@ -71,6 +92,18 @@ export async function sendAiMessage(
       "Format your responses using Markdown: use **bold** for key terms, bullet points or numbered lists for multi-step explanations, and clear headings where helpful. Keep answers well-structured and easy to read.",
   });
 
+  // When an image is attached, explicitly instruct the model to OCR/read it
+  // first. Vision models will sometimes give a vague reply ("I can see an
+  // image of handwriting") instead of actually transcribing and grading it
+  // unless told to — this was the reported "can't OCR handwritten answers" bug.
+  if (imageBase64) {
+    allMessages.push({
+      role: "system",
+      content:
+        "The user has attached an image, which may contain handwritten or printed text, equations, diagrams, or a handwritten exam answer. First, carefully read and transcribe all visible text/working exactly as written, including any handwriting. Then respond to the user's request using that transcribed content — e.g. check their working, point out mistakes, mark the answer, or explain the topic. Never reply that you cannot read the image without first attempting a full transcription.",
+    });
+  }
+
   // Prepare messages with optional image/PDF context
   const processedMessages = messages.map((msg, i) => {
     if (i === messages.length - 1 && msg.role === "user" && (imageBase64 || pdfText)) {
@@ -80,7 +113,7 @@ export async function sendAiMessage(
       if (imageBase64) {
         contentParts.push({
           type: "image_url",
-          image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+          image_url: { url: `data:${imageMimeType || "image/jpeg"};base64,${imageBase64}` },
         });
       }
       if (pdfText) {

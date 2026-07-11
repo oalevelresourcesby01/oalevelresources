@@ -19,6 +19,7 @@ interface Attachment {
   previewUrl?: string;
   extracting: boolean;
   imageBase64?: string;
+  imageMimeType?: string;
   pdfText?: string;
   error?: string;
 }
@@ -52,6 +53,26 @@ export default function AiChat() {
   const attachmentToken = useRef(0);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Lock the outer page scroll while on the chat screen so the fixed-height
+  // chat layout doesn't leave a scrollable gap to the footer underneath —
+  // this was the "screen size not adjusting correctly" mobile layout bug.
+  useEffect(() => {
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
+  }, []);
+
+  // Auto-scroll to the latest message/typing indicator.
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, sending]);
 
   // Revoke every object URL we've created (pending attachment + sent image
   // previews) when the page unmounts, so navigating away doesn't leak memory.
@@ -91,11 +112,15 @@ export default function AiChat() {
 
     if (isImage) {
       const previewUrl = URL.createObjectURL(file);
-      setAttachment({ kind: "image", file, previewUrl, extracting: true });
+      // Capture the real MIME type up front — sending a PNG/HEIC photo of
+      // handwriting mislabeled as JPEG is a common reason vision models
+      // fail to read it, so we forward the browser-reported type as-is.
+      const imageMimeType = file.type || "image/jpeg";
+      setAttachment({ kind: "image", file, previewUrl, extracting: true, imageMimeType });
       try {
         const imageBase64 = await fileToBase64(file);
         if (attachmentToken.current !== token) return;
-        setAttachment({ kind: "image", file, previewUrl, extracting: false, imageBase64 });
+        setAttachment({ kind: "image", file, previewUrl, extracting: false, imageBase64, imageMimeType });
       } catch {
         if (attachmentToken.current !== token) return;
         setAttachment({ kind: "image", file, previewUrl, extracting: false, error: "Couldn't read this image." });
@@ -155,9 +180,14 @@ export default function AiChat() {
     setError(null);
     try {
       const reply = await api.aiChat({
-        message: text || (att?.kind === "pdf" ? "Please read this document and help me with it." : "Please look at this image."),
+        message:
+          text ||
+          (att?.kind === "pdf"
+            ? "Please read this document and help me with it."
+            : "Please read everything written in this image, including any handwriting, then check my work and explain or correct it."),
         sessionId: sessionId.current,
         imageBase64: att?.imageBase64,
+        imageMimeType: att?.imageMimeType,
         pdfText: att?.pdfText,
       });
       setMessages((m) => [
@@ -219,6 +249,7 @@ export default function AiChat() {
           </div>
         )}
         {error && <div className="empty-state">{error}</div>}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat-input-bar">

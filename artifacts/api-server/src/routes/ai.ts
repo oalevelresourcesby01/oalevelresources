@@ -66,11 +66,12 @@ router.post("/ai/chat", async (req, res) => {
   res.setHeader("X-RateLimit-Limit", RATE_LIMIT);
   res.setHeader("X-RateLimit-Remaining", remaining);
 
-  const { message, sessionId, model, imageBase64, pdfText } = req.body as {
+  const { message, sessionId, model, imageBase64, imageMimeType, pdfText } = req.body as {
     message?: string;
     sessionId?: string;
     model?: string;
     imageBase64?: string;
+    imageMimeType?: string;
     pdfText?: string;
   };
 
@@ -96,10 +97,30 @@ router.post("/ai/chat", async (req, res) => {
   const MAX_IMAGE_BASE64_CHARS = 21 * 1024 * 1024; // ~15MB binary, base64-inflated (~33%), plus headroom
   const MAX_PDF_TEXT_CHARS = 200_000; // plenty for a large document, bounds token usage
 
+  const ALLOWED_IMAGE_MIME_TYPES = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/heic",
+    "image/heif",
+  ]);
+  let boundedImageMimeType: string | undefined;
+
   if (imageBase64 !== undefined) {
     if (typeof imageBase64 !== "string" || imageBase64.length === 0 || imageBase64.length > MAX_IMAGE_BASE64_CHARS) {
       res.status(400).json({ error: "imageBase64 is invalid or too large" });
       return;
+    }
+    // Vision models need the correct MIME type to decode the image — a photo
+    // of handwriting sent as a mislabeled "image/jpeg" data URL when it's
+    // actually a PNG/HEIC capture can cause the model to silently fail to
+    // read it. Validate against an allow-list and default to jpeg only when
+    // the client didn't send a recognizable type.
+    if (imageMimeType !== undefined && typeof imageMimeType === "string" && ALLOWED_IMAGE_MIME_TYPES.has(imageMimeType)) {
+      boundedImageMimeType = imageMimeType;
+    } else {
+      boundedImageMimeType = "image/jpeg";
     }
   }
 
@@ -165,7 +186,7 @@ router.post("/ai/chat", async (req, res) => {
 
     logAiSearch(message, knowledgeResults.length, relatedResources.map((r) => r.resourceName));
 
-    const result = await sendAiMessage(messages, model, imageBase64, boundedPdfText, knowledgeContext);
+    const result = await sendAiMessage(messages, model, imageBase64, boundedPdfText, knowledgeContext, boundedImageMimeType);
 
     // Save assistant message
     await pool.query(
