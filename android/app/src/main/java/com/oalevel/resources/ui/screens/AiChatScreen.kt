@@ -324,7 +324,11 @@ private fun ChatBubble(message: ChatMessage) {
 @Composable
 private fun ThinkingBubble() {
     val infiniteTransition = rememberInfiniteTransition(label = "typing")
-    val jumpSpec = infiniteRepeatable<Float>(
+    // InfiniteRepeatableSpec has no .copy(initialStartOffset=...) — each dot
+    // needs its own infiniteRepeatable() call with its own start offset.
+    // (Reusing .copy() on the spec was a compile error that broke the whole
+    // Android build, so this animation never actually shipped.)
+    fun jumpSpec(startOffsetMillis: Int) = infiniteRepeatable<Float>(
         animation = keyframes {
             durationMillis = 900
             0f at 0 using LinearEasing
@@ -332,14 +336,12 @@ private fun ThinkingBubble() {
             0f at 440 using LinearEasing
             0f at 900 using LinearEasing
         },
-        repeatMode = RepeatMode.Restart
+        repeatMode = RepeatMode.Restart,
+        initialStartOffset = StartOffset(startOffsetMillis)
     )
-    val dot1 by infiniteTransition.animateFloat(0f, 0f,
-        animationSpec = jumpSpec.copy(initialStartOffset = StartOffset(0)), label = "d1")
-    val dot2 by infiniteTransition.animateFloat(0f, 0f,
-        animationSpec = jumpSpec.copy(initialStartOffset = StartOffset(150)), label = "d2")
-    val dot3 by infiniteTransition.animateFloat(0f, 0f,
-        animationSpec = jumpSpec.copy(initialStartOffset = StartOffset(300)), label = "d3")
+    val dot1 by infiniteTransition.animateFloat(0f, 0f, animationSpec = jumpSpec(0), label = "d1")
+    val dot2 by infiniteTransition.animateFloat(0f, 0f, animationSpec = jumpSpec(150), label = "d2")
+    val dot3 by infiniteTransition.animateFloat(0f, 0f, animationSpec = jumpSpec(300), label = "d3")
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
