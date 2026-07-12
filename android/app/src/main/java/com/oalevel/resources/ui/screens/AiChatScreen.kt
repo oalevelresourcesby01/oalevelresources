@@ -21,12 +21,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.oalevel.resources.ui.viewmodel.AiChatViewModel
@@ -83,13 +87,29 @@ fun AiChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text("O/A Level AI", fontWeight = FontWeight.Bold)
-                        Text(
-                            "Ask questions, attach images or files",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.SmartToy, null,
+                                modifier = Modifier.size(20.dp), tint = Color.White)
+                        }
+                        Column {
+                            Text(
+                                "AI Assistant",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                "O/A Level expert",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 },
                 navigationIcon = {
@@ -97,7 +117,8 @@ fun AiChatScreen(
                 },
                 actions = {
                     IconButton(onClick = viewModel::clearSession) {
-                        Icon(Icons.Filled.DeleteSweep, "Clear chat")
+                        Icon(Icons.Filled.DeleteSweep, "Clear chat",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             )
@@ -131,9 +152,12 @@ fun AiChatScreen(
         } else {
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.background),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.messages) { msg ->
                     ChatBubble(message = msg)
@@ -143,19 +167,10 @@ fun AiChatScreen(
                 }
             }
         }
-
-        // Error snackbar
-        uiState.error?.let { error ->
-            LaunchedEffect(error) {
-                listState.animateScrollToItem(uiState.messages.lastIndex.coerceAtLeast(0))
-            }
-        }
     }
 }
 
-// Lightweight Markdown renderer covering headings, bullet/numbered lists,
-// bold, italic, and inline code spans — enough for typical AI chat responses
-// without pulling in a full Markdown library dependency.
+// Lightweight Markdown renderer
 private fun formatInlineMarkdown(
     builder: androidx.compose.ui.text.AnnotatedString.Builder,
     text: String
@@ -188,11 +203,6 @@ private fun formatInlineMarkdown(
     if (lastIndex < text.length) builder.append(text.substring(lastIndex))
 }
 
-/**
- * Renders a full markdown block (multiple lines) into an AnnotatedString,
- * handling `#`/`##`/`###` headings and `- `/`1. ` list markers per line, on
- * top of the inline bold/italic/code formatting above.
- */
 private fun formatMarkdown(text: String): androidx.compose.ui.text.AnnotatedString {
     return androidx.compose.ui.text.buildAnnotatedString {
         val lines = text.split("\n")
@@ -246,20 +256,28 @@ private fun ChatBubble(message: ChatMessage) {
     val isUser = message.role == "user"
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
     ) {
         if (!isUser) {
-            Icon(
-                Icons.Filled.SmartToy, null,
-                modifier = Modifier.size(28.dp).padding(end = 4.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.SmartToy, null,
+                    modifier = Modifier.size(16.dp), tint = Color.White)
+            }
+            Spacer(Modifier.width(6.dp))
         }
+
         Column(
             horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
-            modifier = Modifier.widthIn(max = 300.dp)
+            modifier = Modifier.widthIn(max = 290.dp)
         ) {
-            // Attachment preview in bubble
+            // Attachment preview
             if (isUser) {
                 when (message.attachmentType) {
                     "image" -> message.imagePreviewUri?.let { uri ->
@@ -269,16 +287,17 @@ private fun ChatBubble(message: ChatMessage) {
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(160.dp, 120.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(14.dp))
+                                .shadow(2.dp, RoundedCornerShape(14.dp))
                                 .padding(bottom = 4.dp)
                         )
                     }
                     "file" -> message.attachmentName?.let { name ->
                         Row(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
@@ -295,27 +314,60 @@ private fun ChatBubble(message: ChatMessage) {
                 }
             }
 
+            // Bubble
             Box(
                 modifier = Modifier
+                    .shadow(
+                        elevation = 1.dp,
+                        shape = RoundedCornerShape(
+                            topStart = 18.dp, topEnd = 18.dp,
+                            bottomStart = if (isUser) 18.dp else 4.dp,
+                            bottomEnd = if (isUser) 4.dp else 18.dp
+                        )
+                    )
                     .clip(
                         RoundedCornerShape(
-                            topStart = 16.dp, topEnd = 16.dp,
-                            bottomStart = if (isUser) 16.dp else 4.dp,
-                            bottomEnd = if (isUser) 4.dp else 16.dp
+                            topStart = 18.dp, topEnd = 18.dp,
+                            bottomStart = if (isUser) 18.dp else 4.dp,
+                            bottomEnd = if (isUser) 4.dp else 18.dp
                         )
                     )
                     .background(
-                        if (isUser) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceVariant
+                        if (isUser)
+                            Brush.linearGradient(listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary
+                            ))
+                        else
+                            Brush.linearGradient(listOf(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                MaterialTheme.colorScheme.surfaceVariant
+                            ))
                     )
-                    .padding(12.dp)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Text(
                     text = formatMarkdown(message.content),
-                    color = if (isUser) MaterialTheme.colorScheme.onPrimary
+                    color = if (isUser) Color.White
                             else MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 22.sp
                 )
+            }
+        }
+
+        if (isUser) {
+            Spacer(Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.Person, null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
     }
@@ -324,9 +376,6 @@ private fun ChatBubble(message: ChatMessage) {
 @Composable
 private fun ThinkingBubble() {
     val infiniteTransition = rememberInfiniteTransition(label = "typing")
-    // Each dot bounces from 0→-8→0 (upward jump) with a staggered start offset.
-    // Using tween + RepeatMode.Reverse gives a smooth bounce; reversing back to 0
-    // ensures the dot returns cleanly without a jump cut.
     val dot1 by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = -8f,
         animationSpec = infiniteRepeatable(
@@ -353,17 +402,25 @@ private fun ThinkingBubble() {
     )
 
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(Icons.Filled.SmartToy, null,
-            modifier = Modifier.size(28.dp),
-            tint = MaterialTheme.colorScheme.primary)
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp))
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Filled.SmartToy, null,
+                modifier = Modifier.size(16.dp), tint = Color.White)
+        }
+        Box(
+            modifier = Modifier
+                .shadow(1.dp, RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp))
+                .clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -375,7 +432,7 @@ private fun ThinkingBubble() {
                             .size(9.dp)
                             .offset(y = offset.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.75f))
+                            .background(MaterialTheme.colorScheme.primary)
                     )
                 }
             }
@@ -395,7 +452,10 @@ private fun MessageInputBar(
     attachment: com.oalevel.resources.ui.viewmodel.AiAttachment?,
     onClearAttachment: () -> Unit
 ) {
-    Surface(tonalElevation = 3.dp) {
+    Surface(
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -406,7 +466,8 @@ private fun MessageInputBar(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -418,24 +479,32 @@ private fun MessageInputBar(
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                 )
                             }
                         }
                         "file" -> {
-                            if (attachment.isExtracting) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Filled.PictureAsPdf, null,
-                                    modifier = Modifier.size(32.dp),
-                                    tint = MaterialTheme.colorScheme.error)
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFFFEBEE)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (attachment.isExtracting) {
+                                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Filled.PictureAsPdf, null,
+                                        modifier = Modifier.size(26.dp),
+                                        tint = Color(0xFFC62828))
+                                }
                             }
                         }
                     }
                     Text(
                         if (attachment.type == "file" && attachment.isExtracting)
-                            "${attachment.displayName} (reading…)"
+                            "${attachment.displayName} — reading…"
                         else attachment.displayName,
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.labelMedium,
@@ -443,8 +512,8 @@ private fun MessageInputBar(
                         overflow = TextOverflow.Ellipsis
                     )
                     IconButton(onClick = onClearAttachment, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Filled.Close, "Remove attachment",
-                            modifier = Modifier.size(18.dp),
+                        Icon(Icons.Filled.Close, "Remove",
+                            modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -459,44 +528,44 @@ private fun MessageInputBar(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Image attach
                 IconButton(
                     onClick = onPickImage,
                     enabled = isEnabled,
                     modifier = Modifier.size(40.dp)
                 ) {
-                    Icon(
-                        Icons.Filled.AddPhotoAlternate,
-                        contentDescription = "Attach image",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(Icons.Filled.AddPhotoAlternate, "Attach image",
+                        tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.outline)
                 }
-                // File attach
                 IconButton(
                     onClick = onPickFile,
                     enabled = isEnabled,
                     modifier = Modifier.size(40.dp)
                 ) {
-                    Icon(
-                        Icons.Filled.AttachFile,
-                        contentDescription = "Attach file",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(Icons.Filled.AttachFile, "Attach file",
+                        tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.outline)
                 }
 
                 OutlinedTextField(
                     value = text,
                     onValueChange = onTextChange,
-                    placeholder = { Text("Ask a question…") },
+                    placeholder = { Text("Ask a question…", style = MaterialTheme.typography.bodyMedium) },
                     modifier = Modifier.weight(1f),
                     maxLines = 2,
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                    )
                 )
 
                 FilledIconButton(
                     onClick = onSend,
                     enabled = isEnabled && (text.isNotBlank() || attachment != null) &&
-                        !(attachment?.type == "file" && attachment.isExtracting)
+                        !(attachment?.type == "file" && attachment.isExtracting),
+                    modifier = Modifier.size(44.dp),
+                    shape = CircleShape
                 ) {
                     if (isSending) {
                         CircularProgressIndicator(
@@ -504,7 +573,7 @@ private fun MessageInputBar(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Icon(Icons.Filled.Send, "Send")
+                        Icon(Icons.Filled.Send, "Send", modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -526,33 +595,106 @@ private fun AiWelcomeScreen(
     )
 
     Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            Icons.Filled.SmartToy, null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.weight(1f))
+
+        // AI avatar
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .shadow(8.dp, CircleShape)
+                .clip(CircleShape)
+                .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Filled.SmartToy, null,
+                modifier = Modifier.size(44.dp), tint = Color.White)
+        }
+        Spacer(Modifier.height(20.dp))
         Text(
-            "O/A Level AI Assistant",
+            "AI Study Assistant",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
         Text(
-            "Ask questions, attach images or PDF files",
+            "Your personal O/A Level tutor",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
         )
-        suggestions.forEach { suggestion ->
-            SuggestionChip(
-                onClick = { onSuggestionClick(suggestion) },
-                label = { Text(suggestion, style = MaterialTheme.typography.labelMedium) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
-            )
+
+        // Feature pills
+        Row(
+            modifier = Modifier.padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FeaturePill("📄 PDFs")
+            FeaturePill("🖼️ Images")
+            FeaturePill("💡 Explanations")
         }
+
+        Spacer(Modifier.height(4.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        Text(
+            "Try asking:",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(bottom = 8.dp)
+        )
+
+        suggestions.forEach { suggestion ->
+            Card(
+                onClick = { onSuggestionClick(suggestion) },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("✦", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        suggestion,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Icon(Icons.Filled.ChevronRight, null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.outline)
+                }
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun FeaturePill(text: String) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+        )
     }
 }

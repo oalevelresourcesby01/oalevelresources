@@ -94,6 +94,15 @@ router.get("/resources/nodes/:nodeId", async (req, res) => {
 router.get("/resources/nodes/:nodeId/children", async (req, res) => {
   const nodeId = req.params["nodeId"];
 
+  // Special "root" alias — return all top-level nodes (parent_id IS NULL)
+  if (nodeId === "root") {
+    const { rows } = await pool.query(
+      "SELECT * FROM resources WHERE parent_id IS NULL ORDER BY type DESC, name"
+    );
+    res.json({ items: rows.map(mapNode), total: rows.length, page: 1, pageSize: rows.length });
+    return;
+  }
+
   const { rows: nodeRows } = await pool.query(
     "SELECT id, drive_id FROM resources WHERE id = $1",
     [nodeId]
