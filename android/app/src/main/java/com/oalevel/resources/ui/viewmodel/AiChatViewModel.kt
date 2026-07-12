@@ -122,8 +122,13 @@ class AiChatViewModel @Inject constructor(
     }
 
     /**
-     * Attach a PDF/document and extract its real text content with PDFBox so
-     * the AI can actually read it, instead of sending a placeholder string.
+     * Attach a PDF/document.  Strategy:
+     *  1. Try PDFBox text extraction.
+     *  2. If the extracted text is sparse (< 120 chars, i.e. scanned/image-only PDF),
+     *     render the first page with Android's PdfRenderer at 2.5× scale and send it
+     *     as a base-64 JPEG image so the vision model can read diagrams, handwriting
+     *     and typeset formulas that PDFBox cannot extract.
+     *  3. Otherwise send the plain text (capped at 15 000 chars).
      */
     fun onFileAttached(fileName: String, uri: Uri) {
         _uiState.update {
@@ -137,6 +142,7 @@ class AiChatViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
+            // ── Step 1: text extraction ──────────────────────────────────────
             val extracted = withContext(Dispatchers.IO) {
                 runCatching {
                     PDFBoxResourceLoader.init(context)
@@ -147,15 +153,74 @@ class AiChatViewModel @Inject constructor(
                     }
                 }.getOrNull()
             }
-            val pdfText = if (!extracted.isNullOrBlank()) {
-                extracted.take(15_000)
+
+            val cleanText = extracted?.trim() ?: ""
+            val hasRichText = cleanText.length >= 120
+
+            if (hasRichText) {
+                // ── Text-based PDF: send extracted text ──────────────────────
+                _uiState.update { state ->
+                    if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
+                        state.copy(attachment = state.attachment.copy(
+                            pdfText = cleanText.take(15_000),
+                            isExtracting = false
+                        ))
+                    } else state
+                }
             } else {
-                "[Could not extract text from '$fileName' — it may be a scanned/image-only PDF.]"
-            }
-            _uiState.update { state ->
-                if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
-                    state.copy(attachment = state.attachment.copy(pdfText = pdfText, isExtracting = false))
-                } else state
+                // ── Scanned / image-only PDF: render page 1 for vision ───────
+                val pageImageBase64 = withContext(Dispatchers.IO) {
+                    runCatching {
+                        // Write URI content to a temp file (PdfRenderer needs a real file)
+                        val tempFile = java.io.File(context.cacheDir, "ai_pdf_${uri.hashCode()}.pdf")
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            java.io.FileOutputStream(tempFile).use { out -> input.copyTo(out) }
+                        }
+                        val fd = android.os.ParcelFileDescriptor.open(
+                            tempFile, android.os.ParcelFileDescriptor.MODE_READ_ONLY
+                        )
+                        val renderer = android.graphics.pdf.PdfRenderer(fd)
+                        val b64 = renderer.openPage(0).use { page ->
+                            val scale = 2.5f
+                            val w = (page.width  * scale).toInt()
+                            val h = (page.height * scale).toInt()
+                            val bmp = android.graphics.Bitmap.createBitmap(
+                                w, h, android.graphics.Bitmap.Config.ARGB_8888
+                            )
+                            bmp.eraseColor(android.graphics.Color.WHITE)
+                            page.render(bmp, null, null,
+                                android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                            val baos = java.io.ByteArrayOutputStream()
+                            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, baos)
+                            android.util.Base64.encodeToString(
+                                baos.toByteArray(), android.util.Base64.NO_WRAP
+                            )
+                        }
+                        renderer.close()
+                        fd.close()
+                        b64
+                    }.getOrNull()
+                }
+
+                _uiState.update { state ->
+                    if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
+                        if (pageImageBase64 != null) {
+                            // Switch to image-type so vision model is invoked
+                            state.copy(attachment = AiAttachment(
+                                type         = "image",
+                                displayName  = fileName,
+                                imageBase64  = pageImageBase64,
+                                pdfText      = null,
+                                isExtracting = false
+                            ))
+                        } else {
+                            state.copy(attachment = state.attachment.copy(
+                                pdfText = "[Scanned PDF — could not render page for vision analysis.]",
+                                isExtracting = false
+                            ))
+                        }
+                    } else state
+                }
             }
         }
     }

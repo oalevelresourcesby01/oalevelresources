@@ -40,7 +40,9 @@ data class PdfViewerUiState(
     val splitPickerBrowseMode: Boolean = false,
     val splitBrowseStack: List<Pair<String, String>> = listOf("root" to "Browse Resources"),
     val splitBrowseChildren: List<ResourceNode> = emptyList(),
-    val isSplitBrowsing: Boolean = false
+    val isSplitBrowsing: Boolean = false,
+    // ── Fullscreen ─────────────────────────────────────────────────────────────
+    val isFullscreen: Boolean = false
 )
 
 @HiltViewModel
@@ -126,6 +128,10 @@ class PdfViewerViewModel @Inject constructor(
 
     fun toggleNightMode() {
         _uiState.update { it.copy(nightMode = !it.nightMode) }
+    }
+
+    fun toggleFullscreen() {
+        _uiState.update { it.copy(isFullscreen = !it.isFullscreen) }
     }
 
     fun rotate() {

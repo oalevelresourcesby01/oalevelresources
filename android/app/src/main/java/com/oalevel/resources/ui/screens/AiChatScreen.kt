@@ -550,9 +550,10 @@ private fun MessageInputBar(
                 OutlinedTextField(
                     value = text,
                     onValueChange = onTextChange,
-                    placeholder = { Text("Ask a question…", style = MaterialTheme.typography.bodyMedium) },
+                    placeholder = { Text("Ask anything…", style = MaterialTheme.typography.labelLarge) },
                     modifier = Modifier.weight(1f),
-                    maxLines = 2,
+                    minLines = 1,
+                    maxLines = 4,
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,

@@ -190,8 +190,87 @@ fun PdfViewerScreen(
 
     val nightMode = uiState.nightMode
     val rotation = uiState.rotation
+    val isFullscreen = uiState.isFullscreen
     val topBarContainerColor = if (nightMode) Color(0xFF212121) else MaterialTheme.colorScheme.surface
     val topBarContentColor  = if (nightMode) Color.White else MaterialTheme.colorScheme.onSurface
+
+    if (isFullscreen && uiState.pdfUrl != null) {
+        // ── Fullscreen: no TopAppBar, just the PDF + a floating back button ──────
+        val bgColor = if (nightMode) Color(0xFF424242) else MaterialTheme.colorScheme.background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(bgColor)
+        ) {
+            if (uiState.isSplitView) {
+                var splitRatio by remember { mutableFloatStateOf(0.5f) }
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val totalWidthPx = constraints.maxWidth.toFloat()
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        PdfPane(
+                            url = uiState.pdfUrl!!, nightMode = nightMode, rotation = rotation,
+                            paneTitle = "📄 $displayName", onLoaded = viewModel::onPdfLoaded,
+                            onPageChange = viewModel::onPageChange,
+                            modifier = Modifier.weight(splitRatio).fillMaxHeight()
+                        )
+                        Box(
+                            modifier = Modifier.width(12.dp).fillMaxHeight()
+                                .pointerInput(totalWidthPx) {
+                                    detectDragGestures { change, dragAmount ->
+                                        change.consume()
+                                        if (totalWidthPx > 0f)
+                                            splitRatio = (splitRatio + dragAmount.x / totalWidthPx).coerceIn(0.2f, 0.8f)
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(Modifier.width(3.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
+                        }
+                        when {
+                            uiState.secondIsLoading -> Box(
+                                Modifier.weight(1f - splitRatio).fillMaxHeight(), Alignment.Center
+                            ) { PdfLoadingState() }
+                            uiState.secondPdfUrl != null -> PdfPane(
+                                url = uiState.secondPdfUrl!!, nightMode = nightMode, rotation = rotation,
+                                paneTitle = "📄 ${uiState.secondName}", onLoaded = viewModel::onSecondPdfLoaded,
+                                onPageChange = viewModel::onSecondPageChange,
+                                modifier = Modifier.weight(1f - splitRatio).fillMaxHeight()
+                            )
+                            else -> Box(Modifier.weight(1f - splitRatio).fillMaxHeight(), Alignment.Center) {
+                                Text("Second PDF loading…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            } else {
+                PdfPane(
+                    url = uiState.pdfUrl!!, nightMode = nightMode, rotation = rotation,
+                    paneTitle = "", onLoaded = viewModel::onPdfLoaded,
+                    onPageChange = viewModel::onPageChange,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            // Floating toolbar — top-left corner
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                SmallFloatingActionButton(
+                    onClick = { viewModel.toggleFullscreen() },
+                    containerColor = Color(0xCC000000),
+                    contentColor = Color.White
+                ) { Icon(Icons.Filled.FullscreenExit, "Exit fullscreen", modifier = Modifier.size(20.dp)) }
+                SmallFloatingActionButton(
+                    onClick = onBack,
+                    containerColor = Color(0xCC000000),
+                    contentColor = Color.White
+                ) { Icon(Icons.Filled.ArrowBack, "Back", modifier = Modifier.size(20.dp)) }
+            }
+        }
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -288,6 +367,13 @@ fun PdfViewerScreen(
                                     if (uiState.isSplitView) viewModel.closeSplitView()
                                     else viewModel.openSplitSearch()
                                 }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(if (isFullscreen) "Exit Fullscreen" else "Fullscreen") },
+                                leadingIcon = {
+                                    Icon(if (isFullscreen) Icons.Filled.FullscreenExit else Icons.Filled.Fullscreen, null)
+                                },
+                                onClick = { showMenu = false; viewModel.toggleFullscreen() }
                             )
                             DropdownMenuItem(
                                 text = { Text("Share") },
@@ -692,7 +778,7 @@ private fun PdfPageItem(
                 renderer = PdfRenderer(fd)
                 if (pageIndex < renderer.pageCount) {
                     renderer.openPage(pageIndex).use { page ->
-                        val scale = 1.5f
+                        val scale = 3.0f
                         val w = (page.width  * scale).toInt()
                         val h = (page.height * scale).toInt()
                         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
