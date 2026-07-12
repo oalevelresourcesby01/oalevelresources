@@ -75,10 +75,20 @@ fun OALevelNavHost() {
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(Screen.Home.route) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                if (item.route == Screen.Home.route) {
+                                    // Always clear everything and land on Home — never restore
+                                    // saved state, which would bounce the user back to where
+                                    // they came from.
+                                    navController.navigate(Screen.Home.route) {
+                                        popUpTo(Screen.Home.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    navController.navigate(item.route) {
+                                        popUpTo(Screen.Home.route) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             },
                             icon    = { Icon(item.icon, contentDescription = item.label) },
@@ -146,6 +156,14 @@ fun OALevelNavHost() {
                             popUpTo(Screen.Home.route) { inclusive = true }
                             launchSingleTop = true
                         }
+                    },
+                    onBreadcrumbClick = { item ->
+                        // Jump directly to any ancestor folder — pop all browse
+                        // sub-entries above BrowseRoot, then navigate to the tapped crumb.
+                        navController.navigate(Screen.Browse.withId(item.id)) {
+                            popUpTo(Screen.BrowseRoot.route)
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -168,6 +186,14 @@ fun OALevelNavHost() {
                     onHomeClick = {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onBreadcrumbClick = { item ->
+                        // Pop all browse/{nodeId} entries back to the nearest root-level
+                        // browse screen, then navigate straight to the tapped ancestor.
+                        navController.navigate(Screen.Browse.withId(item.id)) {
+                            popUpTo(Screen.BrowseRoot.route)
                             launchSingleTop = true
                         }
                     }

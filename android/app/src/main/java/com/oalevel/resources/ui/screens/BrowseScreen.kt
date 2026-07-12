@@ -43,6 +43,7 @@ fun BrowseScreen(
     onNodeClick: (ResourceNode) -> Unit,
     onBack: (() -> Unit)? = null,
     onHomeClick: (() -> Unit)? = null,
+    onBreadcrumbClick: ((BreadcrumbItem) -> Unit)? = null,
     viewModel: BrowseViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -104,7 +105,10 @@ fun BrowseScreen(
                     )
                 )
                 if (uiState.breadcrumb.isNotEmpty()) {
-                    BreadcrumbRow(breadcrumb = uiState.breadcrumb)
+                    BreadcrumbRow(
+                        breadcrumb = uiState.breadcrumb,
+                        onItemClick = onBreadcrumbClick
+                    )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
@@ -231,7 +235,10 @@ private fun CountChip(label: String, containerColor: Color, contentColor: Color)
 }
 
 @Composable
-fun BreadcrumbRow(breadcrumb: List<BreadcrumbItem>) {
+fun BreadcrumbRow(
+    breadcrumb: List<BreadcrumbItem>,
+    onItemClick: ((BreadcrumbItem) -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -250,15 +257,20 @@ fun BreadcrumbRow(breadcrumb: List<BreadcrumbItem>) {
             Icon(Icons.Filled.ChevronRight, null,
                 Modifier.size(14.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            val isLast = index == breadcrumb.lastIndex
             Text(
                 text = item.name,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = if (index == breadcrumb.lastIndex) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (index == breadcrumb.lastIndex)
+                fontWeight = if (isLast) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (isLast)
                     MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                // Non-last crumbs are tappable for direct jump
+                modifier = if (!isLast && onItemClick != null)
+                    Modifier.clickable { onItemClick(item) }
+                else Modifier
             )
         }
     }
