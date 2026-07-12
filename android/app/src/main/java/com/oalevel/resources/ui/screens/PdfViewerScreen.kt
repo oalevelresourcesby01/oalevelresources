@@ -25,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -201,6 +202,7 @@ fun PdfViewerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(bgColor)
+                .navigationBarsPadding()   // keep PDF content above the system nav bar
         ) {
             if (uiState.isSplitView) {
                 var splitRatio by remember { mutableFloatStateOf(0.5f) }
@@ -675,7 +677,7 @@ private fun PdfPane(
             var zoomOffsetX by remember { mutableFloatStateOf(0f) }
             var zoomOffsetY by remember { mutableFloatStateOf(0f) }
 
-            Box(modifier = modifier) {
+            Box(modifier = modifier.clipToBounds()) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()

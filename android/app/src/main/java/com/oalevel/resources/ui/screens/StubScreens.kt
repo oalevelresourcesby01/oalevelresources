@@ -457,7 +457,11 @@ private fun timeAgo(epochMillis: Long): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    isDark: Boolean = false,
+    onToggleDark: () -> Unit = {}
+) {
     val context = LocalContext.current
 
     // Calculate cache size on composition
@@ -516,6 +520,49 @@ fun SettingsScreen(onBack: () -> Unit) {
                         )
                     }
                 }
+            }
+
+            // ── Appearance ────────────────────────────────────────────
+            item {
+                Text(
+                    "APPEARANCE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(Color(0xFF37474F), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.DarkMode, null,
+                            tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Dark Mode",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium)
+                        Text(
+                            if (isDark) "Dark theme active" else "Light theme active",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(checked = isDark, onCheckedChange = { onToggleDark() })
+                }
+                HorizontalDivider()
             }
 
             // ── General ───────────────────────────────────────────────

@@ -67,9 +67,10 @@ async function extractText(buffer: Buffer): Promise<string> {
     // which tries to read a test file from the current working directory on import.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mod = (await import("pdf-parse/lib/pdf-parse.js")) as any;
-    const pdfParse: (b: Buffer) => Promise<{ text: string }> =
+    const pdfParse: (b: Buffer, opts?: Record<string, unknown>) => Promise<{ text: string; numpages: number }> =
       typeof mod.default === "function" ? mod.default : mod;
-    const data = await pdfParse(buffer);
+    // max: 0 = no page limit — read the ENTIRE document regardless of page count
+    const data = await pdfParse(buffer, { max: 0 });
     return data.text ?? "";
   } catch (err) {
     throw new Error(`PDF text extraction failed: ${String(err)}`);
@@ -78,8 +79,10 @@ async function extractText(buffer: Buffer): Promise<string> {
 
 // ── Text chunking ─────────────────────────────────────────────────────────────
 
-const CHUNK_SIZE = 800;
-const CHUNK_OVERLAP = 80;
+// Larger chunks → more context per search result; overlap prevents splitting
+// key sentences at chunk boundaries.
+const CHUNK_SIZE = 1500;
+const CHUNK_OVERLAP = 200;
 
 function chunkText(text: string): string[] {
   const cleaned = text.replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ");
@@ -292,25 +295,36 @@ export async function searchKnowledge(
        WHERE content_tsv @@ plainto_tsquery('english', $1)
        ORDER BY rank DESC
        LIMIT $2`,
-      [query.trim(), limit * 3]
+      [query.trim(), limit * 10]
     );
 
-    // Deduplicate: best chunk per resource
-    const byResource = new Map<string, KnowledgeSearchResult>();
+    // Allow up to 3 top-ranked chunks per resource so the AI sees enough
+    // context from each relevant document (not just a single 1500-char snippet).
+    // Chunks within a resource are then reordered by position so the AI reads
+    // them in document order, which makes answers more coherent.
+    const MAX_CHUNKS_PER_RESOURCE = 3;
+    const byResource = new Map<string, KnowledgeSearchResult[]>();
     for (const row of rows) {
-      if (!byResource.has(row.resource_id)) {
-        byResource.set(row.resource_id, {
-          resourceId: row.resource_id,
-          resourceName: row.resource_name,
-          chunkIndex: row.chunk_index,
-          content: row.content,
-          score: parseFloat(row.rank),
-        });
+      const existing = byResource.get(row.resource_id) ?? [];
+      if (existing.length < MAX_CHUNKS_PER_RESOURCE) {
+        byResource.set(row.resource_id, [
+          ...existing,
+          {
+            resourceId: row.resource_id,
+            resourceName: row.resource_name,
+            chunkIndex: row.chunk_index,
+            content: row.content,
+            score: parseFloat(row.rank),
+          },
+        ]);
       }
       if (byResource.size >= limit) break;
     }
 
-    return Array.from(byResource.values());
+    // Flatten: sort each resource's chunks by document position
+    return Array.from(byResource.values()).flatMap((chunks) =>
+      chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
+    );
   } catch (err) {
     dbLog("warn", "Knowledge search failed", String(err));
     return [];
