@@ -1,0 +1,463 @@
+# OALevel Resources - Complete UI/UX & Feature Upgrade
+
+You are a senior Flutter UI/UX designer and senior mobile developer. Your task is to redesign the entire application to modern 2026 standards while keeping all existing functionality working.
+
+**IMPORTANT:** Do NOT remove or break any existing features. Only improve, redesign and optimize them.
+
+---
+
+# Critical Bugs To Fix First
+
+## 1. AI PDF Reading Bug (Highest Priority)
+
+Currently when AI scans a PDF, it only reads the first page or only part of the document.
+
+Fix this completely.
+
+Requirements:
+
+* Read the ENTIRE PDF.
+* Scan every page.
+* Extract text from all pages.
+* AI answers must use information from the complete PDF.
+* Never answer using only page 1.
+* Support large PDFs (100+ pages).
+* Improve indexing speed.
+
+---
+
+## 2. Side-by-Side PDF Viewer Problems
+
+The split-screen PDF viewer currently has multiple usability issues.
+
+Fix all of them.
+
+### Add Proper Pinch Gestures
+
+Instead of only double tap:
+
+* Pinch to Zoom
+* Pinch Out
+* Pinch In
+* Smooth zooming
+* Natural gesture support
+
+---
+
+### Independent Zoom
+
+Currently when one PDF is zoomed, it overlaps the other PDF.
+
+Fix this.
+
+Each PDF viewer must have:
+
+* Separate zoom level
+* Separate scroll position
+* Separate gestures
+* No overlapping
+* No layout breaking
+
+---
+
+### Navigation Bar Issue
+
+Currently Android navigation buttons overlap the PDF.
+
+Use SafeArea correctly.
+
+Content must never hide behind
+
+* Home button
+* Back button
+* Recent Apps button
+
+Support all screen sizes.
+
+---
+
+### Improve PDF Experience
+
+Add
+
+• Smooth scrolling
+
+• Fast page rendering
+
+• Better page cache
+
+• Page thumbnails
+
+• Page number indicator
+
+• Jump to page
+
+• Bookmark page
+
+• Highlight text
+
+• Ask AI About This Page
+
+• AI Summary
+
+• AI Formula & Definitions
+
+---
+
+# Complete UI Redesign
+
+The app currently works well but looks outdated.
+
+Redesign the entire application with a premium 2026 design.
+
+Students should immediately feel the app is modern and professional.
+
+---
+
+## Design Language
+
+Use
+
+* Material 3
+* Rounded UI
+* Premium spacing
+* Beautiful typography
+* Modern gradients
+* Soft shadows
+* Smooth animations
+
+Everything should look similar in quality to:
+
+Google Classroom
+
+Notion
+
+ChatGPT
+
+Duolingo
+
+Spotify
+
+Microsoft Copilot
+
+---
+
+## Home Screen
+
+Completely redesign.
+
+Include
+
+Large Hero Section
+
+Modern Subject Cards
+
+Recent Resources
+
+Continue Reading
+
+Latest Papers
+
+Recently Opened
+
+Quick AI Actions
+
+Trending Resources
+
+Beautiful illustrations
+
+Better spacing
+
+Better typography
+
+---
+
+## Subject Cards
+
+Current cards look simple.
+
+Redesign them.
+
+Each card should include
+
+Subject Icon
+
+Subject Name
+
+Paper Count
+
+Beautiful Gradient
+
+Rounded Corners
+
+Soft Shadow
+
+Hover Animation
+
+Ripple Animation
+
+---
+
+## Search Experience
+
+Completely redesign search.
+
+Add
+
+Instant Suggestions
+
+Recent Searches
+
+Popular Searches
+
+Subject Filter
+
+Year Filter
+
+Session Filter
+
+Paper Type Filter
+
+Sort Results
+
+Fast Search
+
+Beautiful search animation
+
+---
+
+## AI Chat
+
+Upgrade AI experience.
+
+Add
+
+Suggested Questions
+
+Typing Animation
+
+Conversation History
+
+Beautiful Message Bubbles
+
+Resource Recommendations
+
+Quick Action Chips
+
+Explain Topic
+
+Summarize Chapter
+
+Generate MCQs
+
+Solve Past Paper
+
+Study Planner
+
+Explain Mistakes
+
+Formula Generator
+
+Definitions
+
+Exam Tips
+
+---
+
+## Student Dashboard
+
+Create a premium dashboard.
+
+Include
+
+Reading Progress
+
+Bookmarks
+
+Downloads
+
+Study Streak
+
+Recently Opened
+
+Favourite Subjects
+
+AI Usage
+
+Study Time
+
+Achievements
+
+Weekly Progress
+
+---
+
+## PDF Viewer
+
+Improve everything.
+
+Add
+
+Bookmarks
+
+Highlights
+
+Notes
+
+Recent Pages
+
+Page History
+
+Reading Progress
+
+Jump to Page
+
+Thumbnail Navigation
+
+AI Summary
+
+Explain This Page
+
+Formula Extraction
+
+Definition Extraction
+
+Fast Rendering
+
+Offline Support
+
+---
+
+## Dark Mode
+
+Create a beautiful Dark Theme.
+
+Use
+
+Material 3 Dynamic Colors
+
+Proper Contrast
+
+Modern Color Palette
+
+Smooth Theme Switching
+
+---
+
+## Icons
+
+Replace inconsistent icons.
+
+Use one icon family only.
+
+Recommended
+
+Material Symbols Rounded
+
+or
+
+Cupertino Icons
+
+---
+
+## Animations
+
+Add premium animations.
+
+Screen transitions
+
+Card animations
+
+Button animations
+
+Loading animations
+
+Hero animations
+
+Fade
+
+Scale
+
+Slide
+
+Lottie animations where appropriate
+
+---
+
+## Performance Optimization
+
+Improve overall performance.
+
+Requirements
+
+Fast startup
+
+Fast scrolling
+
+Image optimization
+
+Memory optimization
+
+Better caching
+
+Lazy loading
+
+Skeleton loaders
+
+Offline mode improvements
+
+Reduce unnecessary rebuilds
+
+Optimize API calls
+
+Smooth 60 FPS animations
+
+---
+
+## Code Quality
+
+Refactor wherever necessary.
+
+Follow clean architecture.
+
+Improve readability.
+
+Remove duplicate code.
+
+Optimize widgets.
+
+Improve responsiveness.
+
+Support
+
+Small phones
+
+Large phones
+
+Tablets
+
+Landscape mode
+
+---
+
+## Final Goal
+
+The application should feel like a polished, premium, production-ready app that students enjoy using every day.
+
+Focus on:
+
+• Beautiful UI
+
+• Smooth UX
+
+• Performance
+
+• Accessibility
+
+• Professional animations
+
+• Modern design
+
+• Better readability
+
+The app should feel comparable to the quality of top educational apps available on the Play Store in 2026 while preserving every existing feature.
