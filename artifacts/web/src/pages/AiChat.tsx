@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "../api";
-import { extractPdfText } from "../pdf";
+import { extractPdfText, extractPdfImages } from "../pdf";
 
 interface Msg {
   id: string;
@@ -21,6 +21,8 @@ interface Attachment {
   imageBase64?: string;
   imageMimeType?: string;
   pdfText?: string;
+  /** Base64 JPEG renders of PDF pages — used when PDF has diagrams/handwriting */
+  pdfImages?: string[];
   error?: string;
 }
 
@@ -128,9 +130,15 @@ export default function AiChat() {
     } else {
       setAttachment({ kind: "pdf", file, extracting: true });
       try {
-        const pdfText = await extractPdfText(file);
+        // Extract text first; if the PDF is image-heavy (handwriting, diagrams)
+        // there will be little text — in that case we also render pages to images
+        // so the AI vision model can actually see the content.
+        const [pdfText, pdfImages] = await Promise.all([
+          extractPdfText(file).catch(() => ""),
+          extractPdfImages(file, 6).catch(() => [] as string[]),
+        ]);
         if (attachmentToken.current !== token) return;
-        setAttachment({ kind: "pdf", file, extracting: false, pdfText });
+        setAttachment({ kind: "pdf", file, extracting: false, pdfText, pdfImages });
       } catch {
         if (attachmentToken.current !== token) return;
         setAttachment({ kind: "pdf", file, extracting: false, error: "Couldn't read this PDF. Try a different file." });
@@ -179,16 +187,28 @@ export default function AiChat() {
     setSending(true);
     setError(null);
     try {
+      // For PDFs: if we have page images (covers diagrams/handwriting) AND
+      // sparse extracted text, send the first page image so the vision model
+      // can actually see drawn content. Append a note about the page count
+      // when there are multiple pages so the AI knows what it's looking at.
+      const hasPdfImages = att?.kind === "pdf" && (att.pdfImages?.length ?? 0) > 0;
+      const pdfTextSparse = (att?.pdfText?.trim().length ?? 0) < 100;
+      const usePdfImage = hasPdfImages && pdfTextSparse;
+      const pageCount = att?.pdfImages?.length ?? 0;
+      const defaultPdfMsg = usePdfImage
+        ? `Please read everything written or drawn in this PDF page (including any handwriting, diagrams, or printed text). ${pageCount > 1 ? `The document has ${pageCount} pages; I'm showing you page 1.` : ""}`
+        : "Please read this document and help me with it.";
+
       const reply = await api.aiChat({
         message:
           text ||
           (att?.kind === "pdf"
-            ? "Please read this document and help me with it."
+            ? defaultPdfMsg
             : "Please read everything written in this image, including any handwriting, then check my work and explain or correct it."),
         sessionId: sessionId.current,
-        imageBase64: att?.imageBase64,
-        imageMimeType: att?.imageMimeType,
-        pdfText: att?.pdfText,
+        imageBase64: usePdfImage ? att!.pdfImages![0] : att?.imageBase64,
+        imageMimeType: usePdfImage ? "image/jpeg" : att?.imageMimeType,
+        pdfText: usePdfImage ? undefined : att?.pdfText,
       });
       setMessages((m) => [
         ...m,

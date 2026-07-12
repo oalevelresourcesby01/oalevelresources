@@ -324,24 +324,33 @@ private fun ChatBubble(message: ChatMessage) {
 @Composable
 private fun ThinkingBubble() {
     val infiniteTransition = rememberInfiniteTransition(label = "typing")
-    // InfiniteRepeatableSpec has no .copy(initialStartOffset=...) — each dot
-    // needs its own infiniteRepeatable() call with its own start offset.
-    // (Reusing .copy() on the spec was a compile error that broke the whole
-    // Android build, so this animation never actually shipped.)
-    fun jumpSpec(startOffsetMillis: Int) = infiniteRepeatable<Float>(
-        animation = keyframes {
-            durationMillis = 900
-            0f at 0 using LinearEasing
-            (-8f) at 220 using LinearEasing
-            0f at 440 using LinearEasing
-            0f at 900 using LinearEasing
-        },
-        repeatMode = RepeatMode.Restart,
-        initialStartOffset = StartOffset(startOffsetMillis)
+    // Each dot bounces from 0→-8→0 (upward jump) with a staggered start offset.
+    // Using tween + RepeatMode.Reverse gives a smooth bounce; reversing back to 0
+    // ensures the dot returns cleanly without a jump cut.
+    val dot1 by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(0)
+        ), label = "d1"
     )
-    val dot1 by infiniteTransition.animateFloat(0f, 0f, animationSpec = jumpSpec(0), label = "d1")
-    val dot2 by infiniteTransition.animateFloat(0f, 0f, animationSpec = jumpSpec(150), label = "d2")
-    val dot3 by infiniteTransition.animateFloat(0f, 0f, animationSpec = jumpSpec(300), label = "d3")
+    val dot2 by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(150)
+        ), label = "d2"
+    )
+    val dot3 by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(300)
+        ), label = "d3"
+    )
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -480,7 +489,7 @@ private fun MessageInputBar(
                     onValueChange = onTextChange,
                     placeholder = { Text("Ask a question…") },
                     modifier = Modifier.weight(1f),
-                    maxLines = 4,
+                    maxLines = 2,
                     shape = RoundedCornerShape(24.dp)
                 )
 

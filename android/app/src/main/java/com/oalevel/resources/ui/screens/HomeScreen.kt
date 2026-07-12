@@ -82,7 +82,7 @@ fun HomeScreen(
                                 "O/A Level Resources",
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                fontSize = 18.sp
+                                fontSize = 15.sp
                             )
                             Text(
                                 "Your study companion",

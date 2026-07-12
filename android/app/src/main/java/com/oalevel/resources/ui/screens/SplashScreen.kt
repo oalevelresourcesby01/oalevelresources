@@ -70,18 +70,21 @@ fun SplashScreen(onFinished: () -> Unit) {
                         .padding(8.dp)
                 )
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
             Text(
                 "O/A Level Resources",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                fontSize = 30.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = (-0.5).sp
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
-                "Your Study Companion",
-                fontSize = 13.sp,
-                color = Color(0xFF757575)
+                "Study smarter. Achieve more.",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF6B7280),
+                letterSpacing = 0.2.sp
             )
         }
     }

@@ -25,6 +25,10 @@ args = "Start application"
 task = "workflow.run"
 args = "artifacts/mockup-sandbox: Component Preview Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Public Website"
+
 [[workflows.workflow]]
 name = "Backend API"
 author = "agent"
@@ -59,6 +63,22 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd artifacts/mockup-sandbox && PORT=5001 BASE_PATH=/__mockup/ pnpm run dev"
+
+[[workflows.workflow]]
+name = "Public Website"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/web && PORT=3000 API_PORT=3001 pnpm run dev"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 3000
+externalPort = 3001
 
 [[ports]]
 localPort = 3001

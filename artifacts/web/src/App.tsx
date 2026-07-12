@@ -4,9 +4,11 @@ import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Search from "./pages/Search";
 import AiChat from "./pages/AiChat";
+import { api, PublicConfig } from "./api";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [config, setConfig] = useState<PublicConfig | null>(null);
   const location = useLocation();
 
   // Close menu on route change
@@ -17,6 +19,9 @@ export default function App() {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
+
+  // Load config once for footer
+  useEffect(() => { api.config().then(setConfig).catch(() => {}); }, []);
 
   return (
     <>
@@ -66,12 +71,24 @@ export default function App() {
       <footer>
         <div className="container footer-inner">
           <img className="footer-logo" src="/logo.png" alt="O/A Level Resources" />
-          <div>
+          <div style={{ flex: 1 }}>
             <div className="footer-title">O/A Level Resources</div>
             <div>
               Free IGCSE, O Level, AS &amp; A2 Level past papers, notes and an AI study assistant.
-              Also available on Android.
             </div>
+            {config?.androidDownloadUrl && (
+              <div style={{ marginTop: "12px" }}>
+                <a
+                  href={config.androidDownloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="app-download-btn"
+                >
+                  <span className="app-download-icon">📱</span>
+                  Install Android App
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </footer>
