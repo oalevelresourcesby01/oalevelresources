@@ -79,7 +79,8 @@ fun DashboardScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         LazyColumn(
             modifier = Modifier

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -206,13 +207,25 @@ fun PdfViewerScreen(
     val topBarContentColor  = if (nightMode) Color.White else MaterialTheme.colorScheme.onSurface
 
     if (isFullscreen && uiState.pdfUrl != null) {
-        // ── Fullscreen: no TopAppBar, just the PDF + a floating back button ──────
+        // ── Fullscreen: hide system bars for true immersive reading ──────────────
+        val view = LocalView.current
+        DisposableEffect(Unit) {
+            val window = (view.context as? android.app.Activity)?.window
+            val controller = window?.let {
+                androidx.core.view.WindowCompat.getInsetsController(it, view)
+            }
+            controller?.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            controller?.systemBarsBehavior =
+                androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            onDispose {
+                controller?.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
         val bgColor = if (nightMode) Color(0xFF424242) else MaterialTheme.colorScheme.background
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(bgColor)
-                .navigationBarsPadding()   // keep PDF content above the system nav bar
         ) {
             if (uiState.isSplitView) {
                 var splitRatio by remember { mutableFloatStateOf(0.5f) }
@@ -416,7 +429,8 @@ fun PdfViewerScreen(
                     containerColor = topBarContainerColor
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         val bgColor = if (nightMode) Color(0xFF424242) else MaterialTheme.colorScheme.background
         Box(

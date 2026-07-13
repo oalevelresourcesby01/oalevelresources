@@ -142,7 +142,8 @@ fun AiChatScreen(
                 attachment = uiState.attachment,
                 onClearAttachment = viewModel::clearAttachment
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         if (uiState.messages.isEmpty() && !uiState.isSending) {
             AiWelcomeScreen(

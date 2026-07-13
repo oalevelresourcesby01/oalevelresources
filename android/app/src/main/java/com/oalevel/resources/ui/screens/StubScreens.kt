@@ -74,7 +74,8 @@ fun DownloadsScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         if (downloads.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -293,7 +294,8 @@ fun FavouritesScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         if (favourites.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -411,7 +413,8 @@ fun RecentScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         if (items.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -499,7 +502,8 @@ fun ContinueReadingScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         if (items.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -628,7 +632,8 @@ fun SettingsScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         LazyColumn(
             modifier = Modifier

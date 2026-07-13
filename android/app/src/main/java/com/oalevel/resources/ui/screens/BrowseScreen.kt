@@ -112,7 +112,8 @@ fun BrowseScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         when {
             // ── Skeleton loading ──────────────────────────────────────────

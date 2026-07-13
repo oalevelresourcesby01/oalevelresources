@@ -16,10 +16,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.oalevel.resources.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.oalevel.resources.data.local.ReadingProgress
 import com.oalevel.resources.data.remote.Announcement
@@ -92,10 +95,11 @@ fun HomeScreen(
                                 .background(Color.White.copy(alpha = 0.2f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.Filled.MenuBook, "App logo",
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
+                            Image(
+                                painter = painterResource(R.drawable.ic_splash_logo_img),
+                                contentDescription = "App logo",
+                                modifier = Modifier.size(26.dp),
+                                contentScale = ContentScale.Fit
                             )
                         }
                         Spacer(Modifier.width(10.dp))
@@ -128,7 +132,8 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         LazyColumn(
             modifier = Modifier
