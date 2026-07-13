@@ -27,9 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -851,30 +861,87 @@ private fun PdfPageItem(
 
 @Composable
 private fun PdfLoadingState() {
+    val infiniteTransition = rememberInfiniteTransition(label = "pdf_shimmer")
+    val shimmerX by infiniteTransition.animateFloat(
+        initialValue = -800f,
+        targetValue  =  800f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(1400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pdf_shimmer_x"
+    )
+    val baseColor      = MaterialTheme.colorScheme.surfaceVariant
+    val highlightColor = MaterialTheme.colorScheme.surface
+
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        CircularProgressIndicator()
-        Spacer(Modifier.height(16.dp))
-        Text("Loading PDF…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Simulate PDF pages as skeleton rectangles (A4 ratio ≈ 0.707)
+        repeat(3) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(0.707f)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(baseColor, highlightColor, baseColor),
+                            start  = Offset(shimmerX, 0f),
+                            end    = Offset(shimmerX + 500f, 0f)
+                        )
+                    )
+            )
+        }
     }
 }
 
 @Composable
 private fun PdfErrorState(error: String, onRetry: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Filled.ErrorOutline, null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error)
-        Spacer(Modifier.height(8.dp))
-        Text(error, color = MaterialTheme.colorScheme.error)
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onRetry) { Text("Retry") }
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.errorContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Filled.ErrorOutline, null,
+                modifier = Modifier.size(40.dp),
+                tint     = MaterialTheme.colorScheme.error
+            )
+        }
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Couldn't load PDF",
+            style      = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            error,
+            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+            style    = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = onRetry,
+            shape   = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("Try Again")
+        }
     }
 }

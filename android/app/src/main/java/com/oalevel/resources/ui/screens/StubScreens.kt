@@ -2,11 +2,16 @@ package com.oalevel.resources.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,19 +20,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.oalevel.resources.data.local.*
+import com.oalevel.resources.ui.components.PremiumEmptyState
+import com.oalevel.resources.ui.viewmodel.ContinueReadingViewModel
 import com.oalevel.resources.ui.viewmodel.DownloadsViewModel
 import com.oalevel.resources.ui.viewmodel.FavouritesViewModel
 import com.oalevel.resources.ui.viewmodel.RecentViewModel
-import com.oalevel.resources.ui.viewmodel.ContinueReadingViewModel
 
-// ── Downloads Screen ──────────────────────────────────────────────────────
+// ── Downloads Screen ──────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,75 +46,93 @@ fun DownloadsScreen(
 ) {
     val downloads by viewModel.downloads.collectAsState(emptyList())
 
-    val active   = downloads.filter { it.status == "downloading" || it.status == "pending" }
-    val done     = downloads.filter { it.status == "completed" }
-    val failed   = downloads.filter { it.status == "error" }
+    val active = downloads.filter { it.status == "downloading" || it.status == "pending" }
+    val done   = downloads.filter { it.status == "completed" }
+    val failed = downloads.filter { it.status == "error" }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Downloads") },
+                title = {
+                    Column {
+                        Text("Downloads", fontWeight = FontWeight.Bold, color = Color.White)
+                        if (downloads.isNotEmpty()) {
+                            Text(
+                                "${done.size} completed · ${active.size} active",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor    = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
     ) { padding ->
         if (downloads.isEmpty()) {
-            EmptyState(
-                modifier = Modifier.padding(padding),
-                icon = Icons.Filled.Download,
-                message = "No downloads yet"
-            )
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                PremiumEmptyState(
+                    icon        = Icons.Filled.CloudDownload,
+                    title       = "No downloads yet",
+                    subtitle    = "PDF files you download will appear here for offline reading"
+                )
+            }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding)) {
-
-                // ── Downloading ──────────────────────────────────────────
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // ── Downloading ───────────────────────────────────────────
                 if (active.isNotEmpty()) {
-                    item { DownloadSectionHeader("Downloading") }
+                    item { DownloadGroupHeader("Downloading", active.size) }
                     items(active) { dl ->
-                        DownloadItem(
+                        DownloadCard(
                             download  = dl,
-                            iconBg    = Color(0xFF1565C0),
+                            accentColor = Color(0xFF1565C0),
                             icon      = Icons.Filled.Downloading,
                             onClick   = {},
                             onDelete  = { viewModel.deleteDownload(dl.id) },
                             onRetry   = null
                         )
                     }
+                    item { Spacer(Modifier.height(4.dp)) }
                 }
 
-                // ── Downloaded ───────────────────────────────────────────
+                // ── Completed ─────────────────────────────────────────────
                 if (done.isNotEmpty()) {
-                    item { DownloadSectionHeader("Downloaded") }
+                    item { DownloadGroupHeader("Completed", done.size) }
                     items(done) { dl ->
-                        DownloadItem(
-                            download  = dl,
-                            iconBg    = Color(0xFF2E7D32),
-                            icon      = Icons.Filled.CheckCircle,
-                            onClick   = { onOpenPdf(dl) },
-                            onDelete  = { viewModel.deleteDownload(dl.id) },
-                            onRetry   = null
+                        DownloadCard(
+                            download    = dl,
+                            accentColor = Color(0xFF2E7D32),
+                            icon        = Icons.Filled.CheckCircle,
+                            onClick     = { onOpenPdf(dl) },
+                            onDelete    = { viewModel.deleteDownload(dl.id) },
+                            onRetry     = null
                         )
                     }
+                    item { Spacer(Modifier.height(4.dp)) }
                 }
 
-                // ── Failed ───────────────────────────────────────────────
+                // ── Failed ────────────────────────────────────────────────
                 if (failed.isNotEmpty()) {
-                    item { DownloadSectionHeader("Failed") }
+                    item { DownloadGroupHeader("Failed", failed.size) }
                     items(failed) { dl ->
-                        DownloadItem(
-                            download  = dl,
-                            iconBg    = Color(0xFFC62828),
-                            icon      = Icons.Filled.ErrorOutline,
-                            onClick   = {},
-                            onDelete  = { viewModel.deleteDownload(dl.id) },
-                            onRetry   = { viewModel.retryDownload(dl.id) }
+                        DownloadCard(
+                            download    = dl,
+                            accentColor = Color(0xFFC62828),
+                            icon        = Icons.Filled.ErrorOutline,
+                            onClick     = {},
+                            onDelete    = { viewModel.deleteDownload(dl.id) },
+                            onRetry     = { viewModel.retryDownload(dl.id) }
                         )
                     }
                 }
@@ -116,110 +142,134 @@ fun DownloadsScreen(
 }
 
 @Composable
-private fun DownloadSectionHeader(title: String) {
-    Text(
-        text     = title.uppercase(),
-        style    = MaterialTheme.typography.labelMedium,
-        color    = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    )
+private fun DownloadGroupHeader(title: String, count: Int) {
+    Row(
+        modifier = Modifier.padding(vertical = 4.dp, horizontal = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            title.uppercase(),
+            style      = MaterialTheme.typography.labelMedium,
+            color      = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = CircleShape
+        ) {
+            Text(
+                "$count",
+                style      = MaterialTheme.typography.labelSmall,
+                color      = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.Bold,
+                modifier   = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+            )
+        }
+    }
 }
 
 @Composable
-private fun DownloadItem(
+private fun DownloadCard(
     download: Download,
-    iconBg: Color,
+    accentColor: Color,
     icon: ImageVector,
     onClick: () -> Unit,
     onDelete: () -> Unit,
     onRetry: (() -> Unit)?
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .clickable(enabled = download.status == "completed") { onClick() }
+    ElevatedCard(
+        onClick    = { if (download.status == "completed") onClick() },
+        shape      = RoundedCornerShape(16.dp),
+        elevation  = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        modifier   = Modifier.fillMaxWidth()
     ) {
-        ListItem(
-            headlineContent   = { Text(download.name, maxLines = 2) },
-            supportingContent = {
-                Text(
-                    download.status.replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = when (download.status) {
-                        "completed"                     -> MaterialTheme.colorScheme.primary
-                        "error"                         -> MaterialTheme.colorScheme.error
-                        "downloading"                   -> Color(0xFF1565C0)
-                        else                            -> MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-            },
-            leadingContent = {
+        Column {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .background(iconBg, RoundedCornerShape(10.dp)),
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(accentColor.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(icon, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                    Icon(icon, null, tint = accentColor, modifier = Modifier.size(24.dp))
                 }
-            },
-            trailingContent = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        download.name,
+                        maxLines   = 2,
+                        overflow   = TextOverflow.Ellipsis,
+                        style      = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        when (download.status) {
+                            "completed"   -> "Ready to read"
+                            "downloading" -> "Downloading… ${download.progress}%"
+                            "pending"     -> "Queued"
+                            "error"       -> "Download failed"
+                            else          -> download.status
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = accentColor
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     if (download.status == "completed") {
-                        AssistChip(
-                            onClick = onClick,
-                            label   = { Text("Open") },
-                            leadingIcon = {
-                                Icon(Icons.Filled.OpenInNew, null,
-                                    modifier = Modifier.size(16.dp))
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        )
-                        Spacer(Modifier.width(4.dp))
+                        FilledTonalButton(
+                            onClick      = onClick,
+                            shape        = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Filled.OpenInNew, null, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Open", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                     if (onRetry != null) {
-                        AssistChip(
-                            onClick = onRetry,
-                            label   = { Text("Retry") },
-                            leadingIcon = {
-                                Icon(Icons.Filled.Refresh, null,
-                                    modifier = Modifier.size(16.dp))
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                labelColor     = MaterialTheme.colorScheme.error,
-                                leadingIconContentColor = MaterialTheme.colorScheme.error
-                            )
-                        )
-                        Spacer(Modifier.width(4.dp))
+                        OutlinedButton(
+                            onClick        = onRetry,
+                            shape          = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            colors         = ButtonDefaults.outlinedButtonColors(contentColor = accentColor)
+                        ) {
+                            Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Retry", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
-                    IconButton(onClick = onDelete) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
                         Icon(Icons.Filled.Delete, "Delete",
-                            tint = MaterialTheme.colorScheme.error)
+                            tint     = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp))
                     }
                 }
             }
-        )
-        // Inline progress bar for active downloads
-        if (download.status == "downloading") {
-            LinearProgressIndicator(
-                progress = { download.progress / 100f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(3.dp),
-                color      = Color(0xFF1565C0),
-                trackColor = Color(0xFFBBDEFB)
-            )
-            Spacer(Modifier.height(4.dp))
+
+            if (download.status == "downloading") {
+                LinearProgressIndicator(
+                    progress   = { download.progress / 100f },
+                    modifier   = Modifier.fillMaxWidth().height(3.dp),
+                    color      = Color(0xFF1565C0),
+                    trackColor = Color(0xFFBBDEFB)
+                )
+            }
         }
-        HorizontalDivider()
     }
 }
 
-// ── Favourites Screen ─────────────────────────────────────────────────────
+// ── Favourites Screen ─────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -233,68 +283,111 @@ fun FavouritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Favourites") },
+                title = { Text("Favourites", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor    = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
     ) { padding ->
         if (favourites.isEmpty()) {
-            EmptyState(Modifier.padding(padding), Icons.Filled.FavoriteBorder,
-                "No favourites yet. Tap the heart icon on any PDF.")
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                PremiumEmptyState(
+                    icon     = Icons.Filled.FavoriteBorder,
+                    title    = "No favourites yet",
+                    subtitle = "Tap the heart icon on any PDF or folder to save it here"
+                )
+            }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 items(favourites) { fav ->
                     val isFolder = fav.type == "folder"
-                    ListItem(
-                        headlineContent = { Text(fav.name) },
-                        supportingContent = {
-                            Text(fav.parentPath,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        },
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(
-                                        if (isFolder) Color(0xFF2E7D32) else Color(0xFFC62828),
-                                        RoundedCornerShape(10.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    if (isFolder) Icons.Filled.Folder else Icons.Filled.PictureAsPdf,
-                                    null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        },
-                        trailingContent = {
-                            IconButton(onClick = { viewModel.remove(fav.resourceId) }) {
-                                // Filled red heart = "saved", tapping removes it
-                                Icon(Icons.Filled.Favorite, null,
-                                    tint = Color(0xFFE53935))
-                            }
-                        },
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                            .clickable { onItemClick(fav) }
+                    FavouriteCard(
+                        name       = fav.name,
+                        parentPath = fav.parentPath,
+                        isFolder   = isFolder,
+                        onOpen     = { onItemClick(fav) },
+                        onRemove   = { viewModel.remove(fav.resourceId) }
                     )
-                    HorizontalDivider()
                 }
             }
         }
     }
 }
 
-// ── Recent Screen ─────────────────────────────────────────────────────────
+@Composable
+private fun FavouriteCard(
+    name: String,
+    parentPath: String,
+    isFolder: Boolean,
+    onOpen: () -> Unit,
+    onRemove: () -> Unit
+) {
+    ElevatedCard(
+        onClick   = onOpen,
+        shape     = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        modifier  = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .background(
+                        if (isFolder) Color(0xFF2E7D32) else Color(0xFFC62828)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    if (isFolder) Icons.Filled.Folder else Icons.Filled.PictureAsPdf,
+                    null,
+                    tint     = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    name,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines   = 1,
+                    overflow   = TextOverflow.Ellipsis
+                )
+                if (parentPath.isNotBlank()) {
+                    Text(
+                        parentPath,
+                        style    = MaterialTheme.typography.labelSmall,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
+            IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Filled.Favorite, null,
+                    tint     = Color(0xFFE53935),
+                    modifier = Modifier.size(20.dp))
+            }
+        }
+    }
+}
+
+// ── Recent Screen ─────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -308,59 +401,86 @@ fun RecentScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Recently Viewed") },
+                title = { Text("Recently Viewed", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor    = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
     ) { padding ->
         if (items.isEmpty()) {
-            EmptyState(Modifier.padding(padding), Icons.Filled.History, "Nothing viewed yet")
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                PremiumEmptyState(
+                    icon     = Icons.Filled.History,
+                    title    = "Nothing viewed yet",
+                    subtitle = "Resources you open will appear here for quick access"
+                )
+            }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 items(items) { item ->
                     val isFolder = item.type == "folder"
-                    ListItem(
-                        headlineContent = { Text(item.name) },
-                        leadingContent = {
+                    ElevatedCard(
+                        onClick   = { onItemClick(item) },
+                        shape     = RoundedCornerShape(14.dp),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                        modifier  = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .background(
-                                        if (isFolder) Color(0xFF2E7D32) else Color(0xFFC62828),
-                                        RoundedCornerShape(10.dp)
-                                    ),
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(13.dp))
+                                    .background(if (isFolder) Color(0xFF2E7D32) else Color(0xFFC62828)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     if (isFolder) Icons.Filled.Folder else Icons.Filled.PictureAsPdf,
                                     null,
-                                    tint = Color.White,
+                                    tint     = Color.White,
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
-                        },
-                        modifier = Modifier.clickable { onItemClick(item) }
-                    )
-                    HorizontalDivider()
+                            Text(
+                                item.name,
+                                style      = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                maxLines   = 2,
+                                overflow   = TextOverflow.Ellipsis,
+                                modifier   = Modifier.weight(1f)
+                            )
+                            Icon(
+                                Icons.Filled.ChevronRight, null,
+                                tint     = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-// ── Continue Reading Screen ───────────────────────────────────────────────
+// ── Continue Reading Screen ───────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContinueReadingScreen(
-    onPdfClick: (com.oalevel.resources.data.local.ReadingProgress) -> Unit,
+    onPdfClick: (ReadingProgress) -> Unit,
     onBack: () -> Unit,
     viewModel: ContinueReadingViewModel = hiltViewModel()
 ) {
@@ -369,73 +489,98 @@ fun ContinueReadingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Continue Reading") },
+                title = { Text("Continue Reading", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor    = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
     ) { padding ->
         if (items.isEmpty()) {
-            EmptyState(Modifier.padding(padding), Icons.Filled.MenuBook,
-                "Start reading a PDF to track your progress")
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                PremiumEmptyState(
+                    icon     = Icons.Filled.MenuBook,
+                    title    = "Nothing in progress",
+                    subtitle = "Open a PDF to start tracking your reading progress"
+                )
+            }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 items(items) { prog ->
                     val pct = if (prog.totalPages > 0)
                         ((prog.currentPage + 1).toFloat() / prog.totalPages * 100).toInt() else 0
+                    val progressFraction = if (prog.totalPages > 0)
+                        (prog.currentPage + 1f) / prog.totalPages else 0f
                     val pctColor = if (pct >= 80) MaterialTheme.colorScheme.primary
                                    else MaterialTheme.colorScheme.onSurfaceVariant
 
-                    ListItem(
-                        headlineContent = { Text(prog.name, maxLines = 2) },
-                        supportingContent = {
-                            Column {
-                                Text(
-                                    "Page ${prog.currentPage + 1} of ${prog.totalPages} · ${timeAgo(prog.lastReadAt)}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                LinearProgressIndicator(
-                                    progress = {
-                                        if (prog.totalPages > 0)
-                                            (prog.currentPage + 1f) / prog.totalPages
-                                        else 0f
-                                    },
-                                    modifier = Modifier.fillMaxWidth().height(3.dp),
-                                    color    = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            }
-                        },
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color(0xFFC62828), RoundedCornerShape(10.dp)),
-                                contentAlignment = Alignment.Center
+                    ElevatedCard(
+                        onClick   = { onPdfClick(prog) },
+                        shape     = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                        modifier  = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Icon(Icons.Filled.MenuBook, null,
-                                    tint = Color.White, modifier = Modifier.size(22.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(RoundedCornerShape(13.dp))
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(Color(0xFFE53935), Color(0xFFC62828))
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Filled.MenuBook, null,
+                                        tint     = Color.White,
+                                        modifier = Modifier.size(22.dp))
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        prog.name,
+                                        maxLines   = 1,
+                                        overflow   = TextOverflow.Ellipsis,
+                                        fontWeight = FontWeight.Medium,
+                                        style      = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        "Page ${prog.currentPage + 1} of ${prog.totalPages} · ${timeAgo(prog.lastReadAt)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    "$pct%",
+                                    style      = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color      = pctColor
+                                )
                             }
-                        },
-                        trailingContent = {
-                            Text(
-                                "$pct%",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = pctColor,
-                                fontWeight = FontWeight.Bold
+                            Spacer(Modifier.height(10.dp))
+                            LinearProgressIndicator(
+                                progress   = { progressFraction },
+                                modifier   = Modifier.fillMaxWidth().height(5.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color      = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
-                        },
-                        modifier = Modifier.clickable { onPdfClick(prog) }
-                    )
-                    HorizontalDivider()
+                        }
+                    }
                 }
             }
         }
@@ -445,15 +590,15 @@ fun ContinueReadingScreen(
 private fun timeAgo(epochMillis: Long): String {
     val diff = System.currentTimeMillis() - epochMillis
     return when {
-        diff < 60_000L          -> "just now"
-        diff < 3_600_000L       -> "${diff / 60_000}m ago"
-        diff < 86_400_000L      -> "${diff / 3_600_000}h ago"
-        diff < 7 * 86_400_000L  -> "${diff / 86_400_000}d ago"
-        else                    -> "${diff / (7 * 86_400_000L)}w ago"
+        diff < 60_000L         -> "just now"
+        diff < 3_600_000L      -> "${diff / 60_000}m ago"
+        diff < 86_400_000L     -> "${diff / 3_600_000}h ago"
+        diff < 7 * 86_400_000L -> "${diff / 86_400_000}d ago"
+        else                   -> "${diff / (7 * 86_400_000L)}w ago"
     }
 }
 
-// ── Settings Screen ───────────────────────────────────────────────────────
+// ── Settings Screen ───────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -464,231 +609,302 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
 
-    // Calculate cache size on composition
-    val cacheMB = remember {
+    var cacheSize by remember { mutableStateOf("…") }
+    LaunchedEffect(Unit) {
         val bytes = context.cacheDir.walkTopDown().sumOf { it.length() }
-        "%.1f".format(bytes / 1_048_576.0)
+        cacheSize = "%.1f MB".format(bytes / 1_048_576.0)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text("Settings", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor    = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentPadding = PaddingValues(bottom = 32.dp)
+        ) {
 
-            // ── Identity header ───────────────────────────────────────
+            // ── App identity header ────────────────────────────────────────
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(24.dp),
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                )
+                            )
+                        )
+                        .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            Icons.Filled.MenuBook, null,
-                            tint = Color.White,
-                            modifier = Modifier.size(52.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Color.White.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.MenuBook, null,
+                                tint     = Color.White,
+                                modifier = Modifier.size(40.dp))
+                        }
                         Text(
                             "O/A Level Resources",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            style      = MaterialTheme.typography.titleMedium,
+                            color      = Color.White,
+                            fontWeight = FontWeight.ExtraBold
                         )
-                        Text(
-                            "Version 1.0.0",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-            }
-
-            // ── Appearance ────────────────────────────────────────────
-            item {
-                Text(
-                    "APPEARANCE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .background(Color(0xFF37474F), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Filled.DarkMode, null,
-                            tint = Color.White, modifier = Modifier.size(20.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Dark Mode",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium)
-                        Text(
-                            if (isDark) "Dark theme active" else "Light theme active",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(checked = isDark, onCheckedChange = { onToggleDark() })
-                }
-                HorizontalDivider()
-            }
-
-            // ── General ───────────────────────────────────────────────
-            item {
-                Text(
-                    "GENERAL",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-            }
-
-            item {
-                SettingRow(
-                    icon     = Icons.Filled.Cloud,
-                    iconBg   = Color(0xFF1565C0),
-                    title    = "Backend URL",
-                    subtitle = "oalevelresources.onrender.com",
-                    onClick  = null
-                )
-            }
-
-            item {
-                SettingRow(
-                    icon     = Icons.Filled.Storage,
-                    iconBg   = Color(0xFF6A1B9A),
-                    title    = "Cache Used",
-                    subtitle = "$cacheMB MB",
-                    onClick  = null
-                )
-            }
-
-            item {
-                SettingRow(
-                    icon     = Icons.Filled.CleaningServices,
-                    iconBg   = Color(0xFFE65100),
-                    title    = "Clear Cache",
-                    subtitle = "Remove temporarily cached data",
-                    onClick  = {
-                        context.cacheDir.walkTopDown()
-                            .filter { it.isFile }
-                            .forEach { it.delete() }
-                    }
-                )
-                HorizontalDivider()
-            }
-
-            // ── About ─────────────────────────────────────────────────
-            item {
-                Text(
-                    "ABOUT",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-            }
-
-            item {
-                SettingRow(
-                    icon     = Icons.Filled.Chat,
-                    iconBg   = Color(0xFF2E7D32),
-                    title    = "WhatsApp Community",
-                    subtitle = "Join our student group",
-                    onClick  = {
-                        runCatching {
-                            val uri = Uri.parse("https://chat.whatsapp.com/invite")
-                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        Surface(
+                            color = Color.White.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text(
+                                "Version 1.0.0",
+                                style    = MaterialTheme.typography.labelSmall,
+                                color    = Color.White,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
                         }
                     }
-                )
+                }
             }
 
+            // ── Appearance section ─────────────────────────────────────────
+            item { SettingsGroupLabel("Appearance") }
             item {
-                SettingRow(
-                    icon     = Icons.Filled.Info,
-                    iconBg   = Color(0xFF1565C0),
-                    title    = "About",
-                    subtitle = "O/A Level Resources v1.0.0",
-                    onClick  = null
-                )
+                SettingsCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    SettingsSwitch(
+                        icon     = Icons.Filled.DarkMode,
+                        iconBg   = Color(0xFF37474F),
+                        title    = "Dark Mode",
+                        subtitle = if (isDark) "Dark theme is active" else "Light theme is active",
+                        checked  = isDark,
+                        onToggle = { onToggleDark() },
+                        showDivider = false
+                    )
+                }
             }
+
+            // ── Storage section ────────────────────────────────────────────
+            item { SettingsGroupLabel("Storage") }
+            item {
+                SettingsCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    SettingsRow(
+                        icon        = Icons.Filled.Storage,
+                        iconBg      = Color(0xFF6A1B9A),
+                        title       = "Cache Used",
+                        subtitle    = cacheSize,
+                        onClick     = null,
+                        showDivider = true
+                    )
+                    SettingsRow(
+                        icon     = Icons.Filled.CleaningServices,
+                        iconBg   = Color(0xFFE65100),
+                        title    = "Clear Cache",
+                        subtitle = "Remove temporarily cached data",
+                        showDivider = false,
+                        onClick  = {
+                            context.cacheDir.walkTopDown()
+                                .filter { it.isFile }
+                                .forEach { it.delete() }
+                            cacheSize = "0.0 MB"
+                        }
+                    )
+                }
+            }
+
+            // ── Network section ────────────────────────────────────────────
+            item { SettingsGroupLabel("Network") }
+            item {
+                SettingsCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    SettingsRow(
+                        icon        = Icons.Filled.Cloud,
+                        iconBg      = Color(0xFF1565C0),
+                        title       = "Backend Server",
+                        subtitle    = "oalevelresources.onrender.com",
+                        onClick     = null,
+                        showDivider = false
+                    )
+                }
+            }
+
+            // ── Community section ──────────────────────────────────────────
+            item { SettingsGroupLabel("Community") }
+            item {
+                SettingsCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    SettingsRow(
+                        icon     = Icons.Filled.Chat,
+                        iconBg   = Color(0xFF2E7D32),
+                        title    = "WhatsApp Community",
+                        subtitle = "Join our student group",
+                        showDivider = false,
+                        onClick  = {
+                            runCatching {
+                                val uri = Uri.parse("https://chat.whatsapp.com/invite")
+                                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                            }
+                        }
+                    )
+                }
+            }
+
+            // ── About section ──────────────────────────────────────────────
+            item { SettingsGroupLabel("About") }
+            item {
+                SettingsCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    SettingsRow(
+                        icon        = Icons.Filled.Info,
+                        iconBg      = Color(0xFF1565C0),
+                        title       = "App Version",
+                        subtitle    = "O/A Level Resources 1.0.0",
+                        onClick     = null,
+                        showDivider = false
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(16.dp)) }
         }
     }
 }
 
 @Composable
-private fun SettingRow(
+private fun SettingsGroupLabel(label: String) {
+    Text(
+        label.uppercase(),
+        style      = MaterialTheme.typography.labelSmall,
+        color      = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.Bold,
+        modifier   = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 6.dp, end = 16.dp)
+    )
+}
+
+@Composable
+private fun SettingsCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ElevatedCard(
+        modifier  = modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(content = content)
+    }
+}
+
+@Composable
+private fun SettingsRow(
     icon: ImageVector,
     iconBg: Color,
     title: String,
     subtitle: String,
+    showDivider: Boolean,
     onClick: (() -> Unit)?
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(iconBg, RoundedCornerShape(10.dp)),
+                .clip(RoundedCornerShape(12.dp))
+                .background(iconBg),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text(title,
+                style      = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium)
             if (subtitle.isNotBlank()) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(subtitle,
+                    style    = MaterialTheme.typography.bodySmall,
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 1.dp))
             }
         }
         if (onClick != null) {
             Icon(Icons.Filled.ChevronRight, null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp))
         }
+    }
+    if (showDivider) {
+        HorizontalDivider(modifier = Modifier.padding(start = 70.dp))
     }
 }
 
-// ── Shared ────────────────────────────────────────────────────────────────
+@Composable
+private fun SettingsSwitch(
+    icon: ImageVector,
+    iconBg: Color,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onToggle: (Boolean) -> Unit,
+    showDivider: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle(!checked) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title,
+                style      = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium)
+            Text(subtitle,
+                style    = MaterialTheme.typography.bodySmall,
+                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 1.dp))
+        }
+        Switch(checked = checked, onCheckedChange = onToggle)
+    }
+    if (showDivider) {
+        HorizontalDivider(modifier = Modifier.padding(start = 70.dp))
+    }
+}
+
+// ── Shared empty state (legacy — kept for API compatibility) ──────────────────
 
 @Composable
 fun EmptyState(
@@ -697,14 +913,10 @@ fun EmptyState(
     message: String
 ) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null,
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-            Spacer(Modifier.height(16.dp))
-            Text(message,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium)
-        }
+        PremiumEmptyState(
+            icon     = icon,
+            title    = message,
+            subtitle = ""
+        )
     }
 }

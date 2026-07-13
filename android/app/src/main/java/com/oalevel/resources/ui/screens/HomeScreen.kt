@@ -25,6 +25,7 @@ import com.oalevel.resources.data.local.ReadingProgress
 import com.oalevel.resources.data.remote.Announcement
 import com.oalevel.resources.data.remote.ResourceItem
 import com.oalevel.resources.data.remote.ResourceNode
+import com.oalevel.resources.ui.components.SkeletonBox
 import com.oalevel.resources.ui.viewmodel.ContinueReadingViewModel
 import com.oalevel.resources.ui.viewmodel.HomeViewModel
 
@@ -291,12 +292,11 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             repeat(2) {
-                                Box(
+                                SkeletonBox(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(130.dp)
-                                        .clip(RoundedCornerShape(18.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .height(130.dp),
+                                    shape    = RoundedCornerShape(18.dp)
                                 )
                             }
                         }

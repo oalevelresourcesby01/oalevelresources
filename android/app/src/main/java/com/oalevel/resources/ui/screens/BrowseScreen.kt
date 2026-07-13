@@ -21,18 +21,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.oalevel.resources.data.local.Download
 import com.oalevel.resources.data.remote.BreadcrumbItem
 import com.oalevel.resources.data.remote.ResourceNode
+import com.oalevel.resources.ui.components.SkeletonBox
 import com.oalevel.resources.ui.viewmodel.BrowseViewModel
 
 private fun formatSize(bytes: Long): String {
     return when {
         bytes >= 1_048_576 -> "%.1f MB".format(bytes / 1_048_576.0)
-        bytes >= 1_024 -> "%.0f KB".format(bytes / 1_024.0)
-        else -> "$bytes B"
+        bytes >= 1_024     -> "%.0f KB".format(bytes / 1_024.0)
+        else               -> "$bytes B"
     }
 }
 
@@ -106,8 +106,8 @@ fun BrowseScreen(
                 )
                 if (uiState.breadcrumb.isNotEmpty()) {
                     BreadcrumbRow(
-                        breadcrumb = uiState.breadcrumb,
-                        onItemClick = onBreadcrumbClick
+                        breadcrumb    = uiState.breadcrumb,
+                        onItemClick   = onBreadcrumbClick
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
@@ -115,89 +115,107 @@ fun BrowseScreen(
         }
     ) { padding ->
         when {
-            uiState.isLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            uiState.error != null -> Box(
-                Modifier.fillMaxSize().padding(padding).padding(16.dp), Alignment.Center
+            // ── Skeleton loading ──────────────────────────────────────────
+            uiState.isLoading -> LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(MaterialTheme.colorScheme.errorContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Filled.WifiOff, null, Modifier.size(36.dp),
-                            tint = MaterialTheme.colorScheme.error)
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        "Couldn't load this folder",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        uiState.error!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    Button(onClick = { viewModel.loadNode(nodeId) }) { Text("Try Again") }
-                }
+                items(9) { SkeletonNodeItem() }
             }
-            uiState.children.isEmpty() -> Box(
-                Modifier.fillMaxSize().padding(padding), Alignment.Center
+
+            // ── Error state ────────────────────────────────────────────────
+            uiState.error != null -> Box(
+                Modifier.fillMaxSize().padding(padding).padding(24.dp),
+                Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
                         modifier = Modifier
                             .size(80.dp)
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(MaterialTheme.colorScheme.errorContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Filled.FolderOpen, null, Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.outline)
+                        Icon(Icons.Filled.WifiOff, null, Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.error)
                     }
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(20.dp))
                     Text(
-                        "Empty folder",
-                        style = MaterialTheme.typography.titleMedium,
+                        "Couldn't load this folder",
+                        style      = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        "No resources here yet",
+                        uiState.error!!,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(Modifier.height(24.dp))
+                    Button(
+                        onClick = { viewModel.loadNode(nodeId) },
+                        shape   = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Try Again")
+                    }
                 }
             }
+
+            // ── Empty state ────────────────────────────────────────────────
+            uiState.children.isEmpty() -> Box(
+                Modifier.fillMaxSize().padding(padding),
+                Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(88.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.FolderOpen, null, Modifier.size(44.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f))
+                    }
+                    Spacer(Modifier.height(20.dp))
+                    Text("Empty folder",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text("No resources here yet",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // ── Content ────────────────────────────────────────────────────
             else -> LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Summary chip row
                 item {
                     val folderCount = uiState.children.count { it.type == "folder" }
-                    val pdfCount = uiState.children.count { it.type == "pdf" }
+                    val pdfCount    = uiState.children.count { it.type == "pdf" }
                     Row(
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (folderCount > 0) CountChip(
-                            label = "$folderCount folder${if (folderCount != 1) "s" else ""}",
+                            label          = "$folderCount folder${if (folderCount != 1) "s" else ""}",
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            contentColor   = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         if (pdfCount > 0) CountChip(
-                            label = "$pdfCount PDF${if (pdfCount != 1) "s" else ""}",
+                            label          = "$pdfCount PDF${if (pdfCount != 1) "s" else ""}",
                             containerColor = Color(0xFFFFEBEE),
-                            contentColor = Color(0xFFC62828)
+                            contentColor   = Color(0xFFC62828)
                         )
                     }
                 }
@@ -218,6 +236,33 @@ fun BrowseScreen(
     }
 }
 
+// ── Skeleton loading item ─────────────────────────────────────────────────────
+
+@Composable
+private fun SkeletonNodeItem() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SkeletonBox(modifier = Modifier.size(44.dp), shape = RoundedCornerShape(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            SkeletonBox(modifier = Modifier.fillMaxWidth(0.75f).height(13.dp))
+            SkeletonBox(modifier = Modifier.fillMaxWidth(0.45f).height(10.dp))
+        }
+        SkeletonBox(modifier = Modifier.size(20.dp), shape = RoundedCornerShape(4.dp))
+    }
+}
+
+// ── Count chip ────────────────────────────────────────────────────────────────
+
 @Composable
 private fun CountChip(label: String, containerColor: Color, contentColor: Color) {
     Surface(
@@ -226,13 +271,15 @@ private fun CountChip(label: String, containerColor: Color, contentColor: Color)
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor,
+            style      = MaterialTheme.typography.labelSmall,
+            color      = contentColor,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            modifier   = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
         )
     }
 }
+
+// ── Breadcrumb row ────────────────────────────────────────────────────────────
 
 @Composable
 fun BreadcrumbRow(
@@ -244,14 +291,14 @@ fun BreadcrumbRow(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment     = Alignment.CenterVertically
     ) {
         Icon(
             Icons.Filled.Home, null,
             modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint     = MaterialTheme.colorScheme.onSurfaceVariant
         )
         breadcrumb.forEachIndexed { index, item ->
             Icon(Icons.Filled.ChevronRight, null,
@@ -259,22 +306,22 @@ fun BreadcrumbRow(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
             val isLast = index == breadcrumb.lastIndex
             Text(
-                text = item.name,
-                style = MaterialTheme.typography.labelMedium,
+                text       = item.name,
+                style      = MaterialTheme.typography.labelMedium,
                 fontWeight = if (isLast) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (isLast)
-                    MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                // Non-last crumbs are tappable for direct jump
-                modifier = if (!isLast && onItemClick != null)
+                color      = if (isLast) MaterialTheme.colorScheme.primary
+                             else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines   = 1,
+                overflow   = TextOverflow.Ellipsis,
+                modifier   = if (!isLast && onItemClick != null)
                     Modifier.clickable { onItemClick(item) }
                 else Modifier
             )
         }
     }
 }
+
+// ── Resource node item ────────────────────────────────────────────────────────
 
 @Composable
 fun ResourceNodeItem(
@@ -284,7 +331,7 @@ fun ResourceNodeItem(
     onDownload: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val isFolder = node.type == "folder"
+    val isFolder       = node.type == "folder"
     val downloadStatus = download?.status
 
     val iconBg = when {
@@ -292,34 +339,33 @@ fun ResourceNodeItem(
         else     -> Brush.linearGradient(listOf(Color(0xFFE53935), Color(0xFFC62828)))
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable { onClick() }
+    ElevatedCard(
+        onClick   = onClick,
+        modifier  = modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Icon container with gradient
+            // Icon with gradient background
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .shadow(2.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(46.dp)
+                    .shadow(2.dp, RoundedCornerShape(13.dp))
+                    .clip(RoundedCornerShape(13.dp))
                     .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (isFolder) Icons.Filled.Folder else Icons.Filled.PictureAsPdf,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint     = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
-                // Download complete checkmark badge
+                // Download complete badge
                 if (downloadStatus == "completed") {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -327,16 +373,15 @@ fun ResourceNodeItem(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(16.dp)
-                                .clip(RoundedCornerShape(4.dp))
+                                .size(17.dp)
+                                .clip(RoundedCornerShape(5.dp))
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                tint = Color(0xFF43A047),
-                                modifier = Modifier.size(14.dp)
+                                Icons.Filled.CheckCircle, null,
+                                tint     = Color(0xFF43A047),
+                                modifier = Modifier.size(15.dp)
                             )
                         }
                     }
@@ -347,15 +392,15 @@ fun ResourceNodeItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     node.name,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style      = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines   = 2,
+                    overflow   = TextOverflow.Ellipsis
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 3.dp)
+                    verticalAlignment     = Alignment.CenterVertically,
+                    modifier              = Modifier.padding(top = 3.dp)
                 ) {
                     if (isFolder) {
                         Text(
@@ -385,26 +430,26 @@ fun ResourceNodeItem(
             if (isFolder) {
                 Icon(
                     Icons.Filled.ChevronRight, null,
-                    tint = MaterialTheme.colorScheme.outline,
+                    tint     = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.size(20.dp)
                 )
             } else if (onDownload != null) {
                 FilledTonalIconButton(
-                    onClick = onDownload,
-                    modifier = Modifier.size(36.dp)
+                    onClick  = onDownload,
+                    modifier = Modifier.size(38.dp),
+                    shape    = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Filled.Download, "Download",
-                        modifier = Modifier.size(18.dp))
+                    Icon(Icons.Filled.Download, "Download", modifier = Modifier.size(18.dp))
                 }
             }
         }
 
-        // Progress bar for active download
+        // Active download progress bar
         if (downloadStatus == "downloading") {
             LinearProgressIndicator(
-                progress = { (download?.progress ?: 0) / 100f },
-                modifier = Modifier.fillMaxWidth().height(3.dp),
-                color = Color(0xFF1565C0),
+                progress   = { (download?.progress ?: 0) / 100f },
+                modifier   = Modifier.fillMaxWidth().height(3.dp),
+                color      = Color(0xFF1565C0),
                 trackColor = Color(0xFFBBDEFB)
             )
         }
@@ -415,26 +460,11 @@ fun ResourceNodeItem(
 private fun StatusBadge(text: String, color: Color, bgColor: Color) {
     Surface(color = bgColor, shape = RoundedCornerShape(6.dp)) {
         Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
+            text       = text,
+            style      = MaterialTheme.typography.labelSmall,
+            color      = color,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-        )
-    }
-}
-
-@Composable
-private fun DownloadBadge(text: String, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.12f),
-        shape = RoundedCornerShape(4.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+            modifier   = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
     }
 }

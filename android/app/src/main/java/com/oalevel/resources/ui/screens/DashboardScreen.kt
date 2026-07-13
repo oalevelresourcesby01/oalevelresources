@@ -137,31 +137,31 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     StatCard(
-                        modifier = Modifier.weight(1f),
-                        value = "${completedDownloads}",
-                        label = "Downloads",
-                        icon = Icons.Filled.Download,
+                        modifier  = Modifier.weight(1f),
+                        value     = "$completedDownloads",
+                        label     = "Downloads",
+                        icon      = Icons.Filled.Download,
                         iconColor = Color(0xFF1565C0),
-                        bgColor = Color(0xFFE3F2FD),
-                        onClick = onDownloadsClick
+                        bgColor   = MaterialTheme.colorScheme.secondaryContainer,
+                        onClick   = onDownloadsClick
                     )
                     StatCard(
-                        modifier = Modifier.weight(1f),
-                        value = "${favourites.size}",
-                        label = "Favourites",
-                        icon = Icons.Filled.Favorite,
-                        iconColor = Color(0xFFC62828),
-                        bgColor = Color(0xFFFFEBEE),
-                        onClick = onFavouritesClick
+                        modifier  = Modifier.weight(1f),
+                        value     = "${favourites.size}",
+                        label     = "Favourites",
+                        icon      = Icons.Filled.Favorite,
+                        iconColor = MaterialTheme.colorScheme.error,
+                        bgColor   = MaterialTheme.colorScheme.errorContainer,
+                        onClick   = onFavouritesClick
                     )
                     StatCard(
-                        modifier = Modifier.weight(1f),
-                        value = "${progressItems.size}",
-                        label = "In Progress",
-                        icon = Icons.Filled.MenuBook,
-                        iconColor = Color(0xFF2E7D32),
-                        bgColor = Color(0xFFE8F5E9),
-                        onClick = onContinueReadingClick
+                        modifier  = Modifier.weight(1f),
+                        value     = "${progressItems.size}",
+                        label     = "In Progress",
+                        icon      = Icons.Filled.MenuBook,
+                        iconColor = MaterialTheme.colorScheme.primary,
+                        bgColor   = MaterialTheme.colorScheme.primaryContainer,
+                        onClick   = onContinueReadingClick
                     )
                 }
             }
@@ -339,33 +339,37 @@ private fun StatCard(
     bgColor: Color,
     onClick: () -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ElevatedCard(
+        onClick   = onClick,
+        modifier  = modifier,
+        shape     = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(14.dp))
                     .background(bgColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(icon, null, tint = iconColor, modifier = Modifier.size(22.dp))
             }
-            Spacer(Modifier.height(8.dp))
-            Text(value,
-                style = MaterialTheme.typography.headlineSmall,
+            Spacer(Modifier.height(10.dp))
+            Text(
+                value,
+                style      = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
-                color = iconColor)
-            Text(label,
+                color      = iconColor
+            )
+            Text(
+                label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
