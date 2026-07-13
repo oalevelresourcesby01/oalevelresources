@@ -1,0 +1,219 @@
+You are working on an existing production-ready Android application.
+
+IMPORTANT RULES:
+
+* Modify ONLY the Android UI.
+* Do NOT modify the backend.
+* Do NOT modify APIs.
+* Do NOT modify business logic.
+* Do NOT modify Room database.
+* Do NOT modify networking.
+* Do NOT modify AI functionality.
+* Do NOT modify search logic.
+* Do NOT modify Google Drive integration.
+* Do NOT modify any existing features.
+* Preserve all current functionality.
+
+Your goal is to transform the application into a premium, modern, Google-quality Android app following Material Design 3.
+
+## Review EVERY Android screen including:
+
+* Home
+* Dashboard
+* Browse
+* Search
+* PDF Viewer
+* AI Chat
+* Downloads
+* Favourites
+* Reading History
+* Settings
+* All dialogs
+* All bottom sheets
+* All cards
+
+## Improve the following:
+
+### Visual Design
+
+* Better spacing throughout the app.
+* Consistent padding and margins.
+* Better typography hierarchy.
+* Premium card designs.
+* Softer shadows.
+* Better corner radius.
+* Better color consistency.
+* Improve visual balance.
+* Better section separation.
+
+### Material 3
+
+* Follow latest Material 3 guidelines.
+* Use Material 3 components wherever appropriate.
+* Improve Chips.
+* Improve Buttons.
+* Improve Cards.
+* Improve App Bars.
+* Improve Navigation.
+* Improve Dialogs.
+* Improve Bottom Sheets.
+
+### Dashboard
+
+Make the dashboard feel modern and premium.
+
+Improve:
+
+* Greeting section
+* Statistics cards
+* Quick Actions
+* Continue Reading
+* Recent Resources
+* Progress cards
+* Empty states
+
+### Browse Screen
+
+Improve:
+
+* Folder cards
+* PDF cards
+* Breadcrumb design
+* Loading states
+* Empty state
+* Better icons
+
+### Search
+
+Improve:
+
+* Search bar
+* Filter chips
+* Search result cards
+* Empty state
+* Loading state
+* Better spacing
+
+### PDF Viewer
+
+Improve:
+
+* Top toolbar
+* Bottom controls
+* Page indicator
+* Loading UI
+* Zoom controls
+* Better fullscreen experience
+
+Do NOT implement AI toolbar yet.
+Only improve the UI.
+
+### AI Chat
+
+Improve ONLY the visual design.
+
+Do NOT change AI logic.
+
+Improve:
+
+* Message bubbles
+* Input area
+* Avatar
+* Welcome screen
+* Empty state
+* Loading appearance
+* Better spacing
+* Better typography
+
+### Downloads
+
+Improve:
+
+* Download cards
+* Progress indicators
+* Empty state
+* Status badges
+
+### Settings
+
+Create a clean modern settings page.
+
+Improve:
+
+* Grouped settings
+* Better icons
+* Better switches
+* Better cards
+* Better spacing
+
+### Animations
+
+Add subtle Material Motion animations only.
+
+Examples:
+
+* Fade
+* Scale
+* Crossfade
+* Card elevation animation
+* Smooth page transitions
+
+Do NOT overuse animations.
+
+### Skeleton Loading
+
+Replace basic loading indicators with beautiful skeleton placeholders wherever possible.
+
+### Responsiveness
+
+Ensure all screens work correctly on:
+
+* Small phones
+* Large phones
+* Tablets
+* Landscape mode
+
+### Dark Mode
+
+Review every screen in Dark Mode.
+
+Fix:
+
+* Contrast
+* Colors
+* Shadows
+* Cards
+* Text readability
+
+### Accessibility
+
+Improve:
+
+* Touch target sizes
+* Font scaling
+* Contrast
+* Accessibility labels
+
+## Quality Requirements
+
+* No placeholder UI.
+* No unfinished screens.
+* No visual inconsistencies.
+* No functionality changes.
+* No duplicate code.
+* Use reusable composables wherever possible.
+
+## Final Steps
+
+1. Build the Android project.
+2. Fix every compilation error.
+3. Fix every UI-related warning.
+4. Verify every screen still works correctly.
+5. Commit the UI improvements.
+6. Push the changes to GitHub.
+7. Stop.
+
+Do NOT implement any new features.
+Do NOT modify application logic.
+
+Only deliver a premium UI redesign.
