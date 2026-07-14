@@ -30,6 +30,19 @@ This installs the post-commit hook and configures the credential helper. `sync.s
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 
+### Running on Replit
+
+Four workflows run in parallel (defined in `.replit`, started via the "Project" run button):
+
+| Workflow | Port | What |
+|---|---|---|
+| Backend API | 3001 | Express API server |
+| Start application | 5000 | Admin control panel (React/Vite), webview preview |
+| Public Website | 3000 | Public-facing site (React/Vite) |
+| artifacts/mockup-sandbox: Component Preview Server | 5001 | Component preview sandbox |
+
+`DATABASE_URL` is provided automatically by Replit's built-in PostgreSQL (migrations run on Backend API startup). `ADMIN_DEFAULT_PASSWORD` and `GITHUB_TOKEN` are set as Replit Secrets. Google Drive API key/Folder ID and the OpenRouter API key are still unset — Drive sync and the AI chat assistant won't work until those are added via the Admin dashboard.
+
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
