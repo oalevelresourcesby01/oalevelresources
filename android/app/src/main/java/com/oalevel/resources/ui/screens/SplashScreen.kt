@@ -39,7 +39,7 @@ fun SplashScreen(onFinished: () -> Unit) {
         alpha.animateTo(1f, animationSpec = tween(600))
     }
     LaunchedEffect(Unit) {
-        delay(2400)
+        delay(2200)
         onFinished()
     }
 
@@ -63,11 +63,10 @@ fun SplashScreen(onFinished: () -> Unit) {
                 Image(
                     painter = painterResource(R.drawable.ic_splash_logo_img),
                     contentDescription = "O/A Level Resources logo",
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(28.dp))
-                        .padding(8.dp)
+                        .clip(RoundedCornerShape(32.dp))
                 )
             }
             Spacer(Modifier.height(24.dp))

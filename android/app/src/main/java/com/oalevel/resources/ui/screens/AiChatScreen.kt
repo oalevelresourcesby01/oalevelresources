@@ -503,15 +503,28 @@ private fun MessageInputBar(
                             }
                         }
                     }
-                    Text(
-                        if (attachment.type == "file" && attachment.isExtracting)
-                            "${attachment.displayName} — reading…"
-                        else attachment.displayName,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            if (attachment.type == "file" && attachment.isExtracting)
+                                "${attachment.displayName} — ${(attachment.extractionProgress * 100).toInt()}%"
+                            else attachment.displayName,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (attachment.type == "file" && attachment.isExtracting) {
+                            Spacer(Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { attachment.extractionProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(2.dp)
+                                    .clip(RoundedCornerShape(1.dp)),
+                                color      = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        }
+                    }
                     IconButton(onClick = onClearAttachment, modifier = Modifier.size(28.dp)) {
                         Icon(Icons.Filled.Close, "Remove",
                             modifier = Modifier.size(16.dp),

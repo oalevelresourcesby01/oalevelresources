@@ -98,8 +98,8 @@ fun HomeScreen(
                             Image(
                                 painter = painterResource(R.drawable.ic_splash_logo_img),
                                 contentDescription = "App logo",
-                                modifier = Modifier.size(26.dp),
-                                contentScale = ContentScale.Fit
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
                             )
                         }
                         Spacer(Modifier.width(10.dp))

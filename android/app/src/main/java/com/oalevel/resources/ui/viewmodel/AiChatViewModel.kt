@@ -35,7 +35,8 @@ data class AiAttachment(
     val imageBase64: String? = null,
     val pdfText: String? = null,
     val previewUri: Uri? = null,
-    val isExtracting: Boolean = false
+    val isExtracting: Boolean = false,
+    val extractionProgress: Float = 0f   // 0→1 while isExtracting, shown as percentage
 )
 
 data class AiChatUiState(
@@ -137,41 +138,55 @@ class AiChatViewModel @Inject constructor(
                     type = "file",
                     displayName = fileName,
                     pdfText = null,
-                    isExtracting = true
+                    isExtracting = true,
+                    extractionProgress = 0.05f
                 )
             )
         }
         viewModelScope.launch {
-            // ── Step 1: text extraction ──────────────────────────────────────
+            // ── Step 1: text extraction (capped to first 20 pages for speed) ──────
+            _uiState.update { s ->
+                s.copy(attachment = s.attachment?.copy(extractionProgress = 0.2f))
+            }
             val extracted = withContext(Dispatchers.IO) {
                 runCatching {
                     PDFBoxResourceLoader.init(context)
                     context.contentResolver.openInputStream(uri)?.use { input ->
                         PDDocument.load(input).use { doc ->
-                            PDFTextStripper().getText(doc)
+                            val stripper = PDFTextStripper().apply {
+                                startPage = 1
+                                endPage   = minOf(20, doc.numberOfPages)
+                            }
+                            stripper.getText(doc)
                         }
                     }
                 }.getOrNull()
+            }
+            _uiState.update { s ->
+                s.copy(attachment = s.attachment?.copy(extractionProgress = 0.5f))
             }
 
             val cleanText = extracted?.trim() ?: ""
             val hasRichText = cleanText.length >= 120
 
             if (hasRichText) {
-                // ── Text-based PDF: send extracted text ──────────────────────
+                // ── Text-based PDF ───────────────────────────────────────────────
                 _uiState.update { state ->
                     if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
                         state.copy(attachment = state.attachment.copy(
                             pdfText = cleanText.take(15_000),
-                            isExtracting = false
+                            isExtracting = false,
+                            extractionProgress = 1f
                         ))
                     } else state
                 }
             } else {
-                // ── Scanned / image-only PDF: render page 1 for vision ───────
+                // ── Scanned / image-only PDF: render at 1.5× for speed ───────────
+                _uiState.update { s ->
+                    s.copy(attachment = s.attachment?.copy(extractionProgress = 0.65f))
+                }
                 val pageImageBase64 = withContext(Dispatchers.IO) {
                     runCatching {
-                        // Write URI content to a temp file (PdfRenderer needs a real file)
                         val tempFile = java.io.File(context.cacheDir, "ai_pdf_${uri.hashCode()}.pdf")
                         context.contentResolver.openInputStream(uri)?.use { input ->
                             java.io.FileOutputStream(tempFile).use { out -> input.copyTo(out) }
@@ -181,7 +196,7 @@ class AiChatViewModel @Inject constructor(
                         )
                         val renderer = android.graphics.pdf.PdfRenderer(fd)
                         val b64 = renderer.openPage(0).use { page ->
-                            val scale = 2.5f
+                            val scale = 1.5f   // reduced from 2.5× — faster encode/send, still readable
                             val w = (page.width  * scale).toInt()
                             val h = (page.height * scale).toInt()
                             val bmp = android.graphics.Bitmap.createBitmap(
@@ -191,7 +206,7 @@ class AiChatViewModel @Inject constructor(
                             page.render(bmp, null, null,
                                 android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                             val baos = java.io.ByteArrayOutputStream()
-                            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, baos)
+                            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 65, baos)
                             android.util.Base64.encodeToString(
                                 baos.toByteArray(), android.util.Base64.NO_WRAP
                             )
@@ -201,22 +216,26 @@ class AiChatViewModel @Inject constructor(
                         b64
                     }.getOrNull()
                 }
+                _uiState.update { s ->
+                    s.copy(attachment = s.attachment?.copy(extractionProgress = 0.9f))
+                }
 
                 _uiState.update { state ->
                     if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
                         if (pageImageBase64 != null) {
-                            // Switch to image-type so vision model is invoked
                             state.copy(attachment = AiAttachment(
-                                type         = "image",
-                                displayName  = fileName,
-                                imageBase64  = pageImageBase64,
-                                pdfText      = null,
-                                isExtracting = false
+                                type               = "image",
+                                displayName        = fileName,
+                                imageBase64        = pageImageBase64,
+                                pdfText            = null,
+                                isExtracting       = false,
+                                extractionProgress = 1f
                             ))
                         } else {
                             state.copy(attachment = state.attachment.copy(
-                                pdfText = "[Scanned PDF — could not render page for vision analysis.]",
-                                isExtracting = false
+                                pdfText            = "[Scanned PDF — could not render page for vision analysis.]",
+                                isExtracting       = false,
+                                extractionProgress = 1f
                             ))
                         }
                     } else state

@@ -52,6 +52,8 @@ import com.oalevel.resources.ui.viewmodel.PdfViewerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
@@ -68,7 +70,14 @@ fun PdfViewerScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val shareScope = rememberCoroutineScope()
-    var showMenu by remember { mutableStateOf(false) }
+    var showMenu            by remember { mutableStateOf(false) }
+    var showGoToPageDialog  by remember { mutableStateOf(false) }
+    var goToPageInput       by remember { mutableStateOf("") }
+    var showPageRangeDialog by remember { mutableStateOf(false) }
+    var rangeFromInput      by remember { mutableStateOf("") }
+    var rangeToInput        by remember { mutableStateOf("") }
+    var isExtractingRange   by remember { mutableStateOf(false) }
+    var scrollToPage        by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(nodeId) { viewModel.loadPdf(nodeId, displayName) }
 
@@ -196,6 +205,103 @@ fun PdfViewerScreen(
             },
             confirmButton = {
                 TextButton(onClick = viewModel::closeSplitSearch) { Text("Cancel") }
+            }
+        )
+    }
+
+    // ── Go-to-page dialog ─────────────────────────────────────────────────────
+    if (showGoToPageDialog) {
+        AlertDialog(
+            onDismissRequest = { showGoToPageDialog = false; goToPageInput = "" },
+            title = { Text("Go to Page") },
+            text = {
+                OutlinedTextField(
+                    value = goToPageInput,
+                    onValueChange = { v -> if (v.length <= 5) goToPageInput = v.filter(Char::isDigit) },
+                    label = { Text("Page (1–${uiState.totalPages})") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val p = goToPageInput.toIntOrNull()
+                    if (p != null && p in 1..uiState.totalPages) scrollToPage = p
+                    showGoToPageDialog = false; goToPageInput = ""
+                }) { Text("Go") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGoToPageDialog = false; goToPageInput = "" }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // ── Share page-range dialog ───────────────────────────────────────────────
+    if (showPageRangeDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isExtractingRange) showPageRangeDialog = false },
+            title = { Text("Share Page Range") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Choose pages to extract from "$displayName" and share as a smaller PDF.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = rangeFromInput,
+                            onValueChange = { v -> if (v.length <= 5) rangeFromInput = v.filter(Char::isDigit) },
+                            label = { Text("From page") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = rangeToInput,
+                            onValueChange = { v -> if (v.length <= 5) rangeToInput = v.filter(Char::isDigit) },
+                            label = { Text("To page") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (isExtractingRange) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Text("Extracting pages…", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !isExtractingRange,
+                    onClick = {
+                        val from  = rangeFromInput.toIntOrNull() ?: 1
+                        val to    = rangeToInput.toIntOrNull()   ?: uiState.totalPages
+                        val url   = uiState.pdfUrl               ?: return@TextButton
+                        val total = uiState.totalPages
+                        val safeFrom = from.coerceIn(1, total)
+                        val safeTo   = to.coerceIn(safeFrom, total)
+                        isExtractingRange = true
+                        shareScope.launch {
+                            sharePageRange(context, url, displayName, safeFrom, safeTo)
+                            isExtractingRange = false
+                            showPageRangeDialog = false
+                        }
+                    }
+                ) { Text("Share") }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !isExtractingRange,
+                    onClick = { showPageRangeDialog = false }
+                ) { Text("Cancel") }
             }
         )
     }
@@ -400,6 +506,13 @@ fun PdfViewerScreen(
                                 },
                                 onClick = { showMenu = false; viewModel.toggleFullscreen() }
                             )
+                            if (uiState.totalPages > 0) {
+                                DropdownMenuItem(
+                                    text = { Text("Go to Page…") },
+                                    leadingIcon = { Icon(Icons.Filled.FindInPage, null) },
+                                    onClick = { showMenu = false; showGoToPageDialog = true }
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text("Share") },
                                 leadingIcon = { Icon(Icons.Filled.Share, null) },
@@ -412,6 +525,18 @@ fun PdfViewerScreen(
                                     }
                                 }
                             )
+                            if (uiState.pdfUrl != null && uiState.totalPages > 0) {
+                                DropdownMenuItem(
+                                    text = { Text("Share Page Range…") },
+                                    leadingIcon = { Icon(Icons.Filled.ContentCut, null) },
+                                    onClick = {
+                                        showMenu = false
+                                        rangeFromInput = "1"
+                                        rangeToInput   = "${uiState.totalPages}"
+                                        showPageRangeDialog = true
+                                    }
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text("Open in Browser") },
                                 leadingIcon = { Icon(Icons.Filled.OpenInBrowser, null) },
@@ -546,13 +671,15 @@ fun PdfViewerScreen(
                         // ── Single view: PDF + reading progress bar at bottom ─────
                         Column(modifier = Modifier.fillMaxSize()) {
                             PdfPane(
-                                url          = uiState.pdfUrl!!,
-                                nightMode    = nightMode,
-                                rotation     = rotation,
-                                paneTitle    = "",
-                                onLoaded     = viewModel::onPdfLoaded,
-                                onPageChange = viewModel::onPageChange,
-                                modifier     = Modifier.weight(1f)
+                                url              = uiState.pdfUrl!!,
+                                nightMode        = nightMode,
+                                rotation         = rotation,
+                                paneTitle        = "",
+                                onLoaded         = viewModel::onPdfLoaded,
+                                onPageChange     = viewModel::onPageChange,
+                                scrollToPage     = scrollToPage,
+                                onScrollConsumed = { scrollToPage = null },
+                                modifier         = Modifier.weight(1f)
                             )
 
                             // Reading progress bar
@@ -626,6 +753,43 @@ private suspend fun sharePdfFile(context: android.content.Context, url: String, 
     context.startActivity(Intent.createChooser(intent, "Share $safeName"))
 }
 
+// ── Extract a page range and share it as a smaller PDF ────────────────────
+
+private suspend fun sharePageRange(
+    context: android.content.Context,
+    url: String,
+    displayName: String,
+    fromPage: Int,
+    toPage: Int
+) {
+    val safeName = if (displayName.endsWith(".pdf", ignoreCase = true)) displayName else "$displayName.pdf"
+    val outFile = withContext(Dispatchers.IO) {
+        runCatching {
+            val srcFile = File(context.cacheDir, "pdf_${url.hashCode()}.pdf")
+            if (!srcFile.exists() || srcFile.length() == 0L) {
+                URL(url).openStream().use { i -> FileOutputStream(srcFile).use { o -> i.copyTo(o) } }
+            }
+            com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(context)
+            val srcDoc = com.tom_roush.pdfbox.pdmodel.PDDocument.load(srcFile)
+            val dstDoc = com.tom_roush.pdfbox.pdmodel.PDDocument()
+            val fromIdx = (fromPage - 1).coerceIn(0, srcDoc.pages.count - 1)
+            val toIdx   = (toPage   - 1).coerceIn(fromIdx, srcDoc.pages.count - 1)
+            for (i in fromIdx..toIdx) dstDoc.importPage(srcDoc.getPage(i))
+            val out = File(context.cacheDir, "range_p${fromPage}_${toPage}_${url.hashCode()}.pdf")
+            dstDoc.save(out); dstDoc.close(); srcDoc.close()
+            out
+        }.getOrNull()
+    } ?: return
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", outFile)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/pdf"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, "Pages $fromPage–$toPage of $safeName")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share pages $fromPage–$toPage"))
+}
+
 // ── Lazy PDF pane — downloads file once, renders pages on demand ───────────
 
 @Composable
@@ -636,29 +800,64 @@ private fun PdfPane(
     paneTitle: String = "",
     onLoaded: (Int) -> Unit,
     onPageChange: (Int) -> Unit = {},
+    scrollToPage: Int? = null,
+    onScrollConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
-    var filePath  by remember(url) { mutableStateOf<String?>(null) }
-    var pageCount by remember(url) { mutableStateOf(0) }
-    var isLoading by remember(url) { mutableStateOf(true) }
-    var error     by remember(url) { mutableStateOf<String?>(null) }
+    var filePath         by remember(url) { mutableStateOf<String?>(null) }
+    var pageCount        by remember(url) { mutableStateOf(0) }
+    var isLoading        by remember(url) { mutableStateOf(true) }
+    var error            by remember(url) { mutableStateOf<String?>(null) }
+    var downloadProgress by remember(url) { mutableStateOf(0f) }
 
     LaunchedEffect(url) {
         isLoading = true
         error     = null
+        downloadProgress = 0f
 
         data class PaneInit(val path: String, val count: Int)
 
+        // ── Download with byte-level progress ────────────────────────────────
+        val tempFile = File(context.cacheDir, "pdf_${url.hashCode()}.pdf")
+        if (!tempFile.exists() || tempFile.length() == 0L) {
+            val dlResult = withContext(Dispatchers.IO) {
+                runCatching {
+                    val conn = (java.net.URL(url).openConnection() as java.net.HttpURLConnection)
+                        .also { it.connect() }
+                    val totalBytes = conn.contentLengthLong
+                    val buf = ByteArray(65_536)
+                    var downloaded = 0L
+                    FileOutputStream(tempFile).use { out ->
+                        conn.inputStream.use { inp ->
+                            while (true) {
+                                val n = inp.read(buf)
+                                if (n == -1) break
+                                out.write(buf, 0, n)
+                                downloaded += n
+                                if (totalBytes > 0) {
+                                    val pct = (downloaded.toFloat() / totalBytes).coerceIn(0f, 0.95f)
+                                    withContext(Dispatchers.Main.immediate) { downloadProgress = pct }
+                                }
+                            }
+                        }
+                    }
+                    conn.disconnect()
+                }
+            }
+            if (dlResult.isFailure) {
+                error = dlResult.exceptionOrNull()?.message ?: "Download failed"
+                isLoading = false
+                return@LaunchedEffect
+            }
+        } else {
+            downloadProgress = 1f
+        }
+
+        // ── Open renderer ─────────────────────────────────────────────────────
         val result: Result<PaneInit> = withContext(Dispatchers.IO) {
             runCatching {
-                val tempFile = File(context.cacheDir, "pdf_${url.hashCode()}.pdf")
-                if (!tempFile.exists() || tempFile.length() == 0L) {
-                    URL(url).openStream().use { input ->
-                        FileOutputStream(tempFile).use { output -> input.copyTo(output) }
-                    }
-                }
                 var fd: ParcelFileDescriptor? = null
                 var renderer: PdfRenderer?    = null
                 try {
@@ -686,11 +885,20 @@ private fun PdfPane(
     }
 
     when {
-        isLoading     -> PdfLoadingState()
+        isLoading     -> PdfLoadingState(downloadProgress)
         error != null -> PdfErrorState(error!!) {}
         filePath != null -> {
             val bgColor   = if (nightMode) Color(0xFF424242) else Color.White
             val listState = rememberLazyListState()
+
+            // ── Jump to page on request (e.g. from Go-to-Page dialog) ───────
+            LaunchedEffect(scrollToPage) {
+                val target = scrollToPage ?: return@LaunchedEffect
+                if (pageCount > 0) {
+                    listState.animateScrollToItem((target - 1).coerceIn(0, pageCount - 1))
+                    onScrollConsumed()
+                }
+            }
 
             // Report current page via list state
             val currentIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
@@ -874,7 +1082,7 @@ private fun PdfPageItem(
 // ── State composables ──────────────────────────────────────────────────────
 
 @Composable
-private fun PdfLoadingState() {
+private fun PdfLoadingState(downloadProgress: Float = 0f) {
     val infiniteTransition = rememberInfiniteTransition(label = "pdf_shimmer")
     val shimmerX by infiniteTransition.animateFloat(
         initialValue = -800f,
@@ -908,6 +1116,24 @@ private fun PdfLoadingState() {
                             end    = Offset(shimmerX + 500f, 0f)
                         )
                     )
+            )
+        }
+        // ── Download progress ────────────────────────────────────────────────
+        if (downloadProgress in 0.01f..0.99f) {
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress   = { downloadProgress },
+                modifier   = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                color      = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "${(downloadProgress * 100).toInt()}% downloaded",
+                style    = MaterialTheme.typography.labelSmall,
+                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

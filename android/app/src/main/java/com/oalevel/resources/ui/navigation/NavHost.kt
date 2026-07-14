@@ -166,7 +166,7 @@ fun OALevelNavHost() {
                         popExitTransition  = tabExit
                     ) {
                         HomeScreen(
-                            onLevelClick           = { node -> navController.navigate(Screen.Browse.withId(node.id)) },
+                            onLevelClick           = { node -> if (node.id.isNotBlank()) navController.navigate(Screen.Browse.withId(node.id)) },
                             onSearchClick          = {
                                 navController.navigate(Screen.Search.route) {
                                     popUpTo(Screen.Home.route) { saveState = true }

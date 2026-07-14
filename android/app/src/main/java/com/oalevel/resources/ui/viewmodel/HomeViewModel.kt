@@ -27,7 +27,17 @@ class HomeViewModel @Inject constructor(
     private val repository: ResourceRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
+    companion object {
+        // Always-visible fallback cards — replaced with real nodes (incl. IDs) on first load.
+        private val FALLBACK_LEVELS = listOf(
+            ResourceNode(id = "", driveId = "", name = "O Level", type = "folder", depth = 0),
+            ResourceNode(id = "", driveId = "", name = "A Level", type = "folder", depth = 0),
+        )
+    }
+
+    private val _uiState = MutableStateFlow(
+        HomeUiState(isLoadingLevels = false, levels = FALLBACK_LEVELS)
+    )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
