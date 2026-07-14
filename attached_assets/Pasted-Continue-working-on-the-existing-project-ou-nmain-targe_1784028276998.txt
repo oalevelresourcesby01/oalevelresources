@@ -1,0 +1,503 @@
+Continue working on the existing project.
+
+ou nmain target i android app taht will be given to student users  
+
+
+
+IMPORTANT:
+
+
+
+First fix the AI-related bugs below.
+
+
+
+Do NOT modify unrelated screens.
+
+
+
+Do NOT redesign the UI outside the AI Chat.
+
+
+
+Do NOT change the backend architecture.
+
+
+
+Preserve all existing functionality.
+
+
+
+Build after every major change.
+
+
+
+Fix compilation errors before continuing.
+
+
+
+---
+
+
+
+## PHASE 1 — FIX EXISTING AI BUGS
+
+
+
+BUG 1 — Conversation Memory
+
+
+
+The AI currently forgets previous messages.
+
+
+
+If a user uploads a PDF and asks:
+
+
+
+"Summarize this."
+
+
+
+Then later asks:
+
+
+
+"Explain page 3."
+
+
+
+or
+
+
+
+"What does this formula mean?"
+
+
+
+The AI should remember the uploaded PDF and the previous conversation without asking the user to upload it again.
+
+
+
+Conversation context must remain available throughout the chat session.
+
+
+
+The AI should always receive previous conversation history.
+
+
+
+---
+
+
+
+BUG 2 — Local Knowledge First
+
+
+
+The AI must NEVER immediately rely on general internet knowledge.
+
+
+
+Priority order must always be:
+
+
+
+1. Current uploaded PDF
+
+
+
+2. Local indexed knowledge base (all PDFs already stored inside the app)
+
+
+
+3. Google Drive indexed resources
+
+
+
+4. General AI knowledge
+
+
+
+If the answer exists inside local resources, answer from them first.
+
+
+
+If multiple PDFs contain relevant information, combine them.
+
+
+
+Mention the source PDF title whenever possible.
+
+
+
+---
+
+
+
+BUG 3 — Whole PDF Understanding
+
+
+
+Do not only retrieve one chunk.
+
+
+
+Improve retrieval so the AI understands the complete document.
+
+
+
+When needed:
+
+
+
+Retrieve multiple neighbouring chunks.
+
+
+
+Retrieve multiple relevant pages.
+
+
+
+Maintain page order.
+
+
+
+Generate answers using the complete context instead of isolated fragments.
+
+
+
+---
+
+
+
+BUG 4 — Resource Awareness
+
+
+
+The AI should know every indexed PDF available inside the application.
+
+
+
+Examples:
+
+
+
+"Do you have Chemistry Notes?"
+
+
+
+"Show me Biology MCQs."
+
+
+
+"Which Physics topical papers are available?"
+
+
+
+The AI should answer using the local resource index instead of saying "I don't know."
+
+
+
+---
+
+
+
+BUG 5 — Image Support
+
+
+
+Allow users to send images in AI Chat.
+
+
+
+The AI should:
+
+
+
+View images.
+
+
+
+Analyze diagrams.
+
+
+
+Analyze handwritten notes.
+
+
+
+Analyze graphs.
+
+
+
+Explain screenshots.
+
+
+
+Support both images and PDFs in the same conversation.
+
+
+
+---
+
+
+
+---
+
+---
+
+
+
+## BUG 6 — Full PDF Parsing (CRITICAL)
+
+
+
+The AI currently reads only the first page or a partial OCR preview of uploaded PDFs.
+
+
+
+This is NOT acceptable.
+
+
+
+When a user uploads a PDF:
+
+
+
+* Read the ENTIRE PDF, not just page 1.
+
+* Parse every page before generating an answer.
+
+* Do NOT stop after the first page.
+
+* Do NOT rely on the PDF thumbnail or preview image.
+
+* Do NOT use OCR if the PDF already contains selectable text.
+
+* Use OCR only for scanned pages that contain images instead of text.
+
+* Preserve the correct page order while extracting content.
+
+* Support PDFs with hundreds of pages.
+
+* Build a complete document context before answering.
+
+* The AI should be able to answer questions about ANY page of the uploaded PDF.
+
+
+
+Example:
+
+
+
+User uploads a 150-page PDF.
+
+
+
+User asks:
+
+
+
+"Summarize Chapter 8."
+
+
+
+The AI must read all 150 pages, identify Chapter 8, and answer from the actual document.
+
+
+
+If the user later asks:
+
+
+
+"What is written on page 97?"
+
+
+
+The AI should answer directly without asking the user to upload the PDF again.
+
+
+
+If the answer exists on page 97, retrieve that page and its surrounding pages for context before generating the response.
+
+
+
+The uploaded PDF should remain attached to the current chat session until the conversation ends.
+
+
+
+Never answer with "I don't know" if the uploaded document contains the requested information.
+
+
+
+Build the Android project after implementing this feature, fix all compilation errors, verify multi-page PDF reading works correctly, then commit and push to GitHub.
+
+ If the uploaded PDF has already been parsed once during the current chat session, reuse the parsed content instead of re-reading the file for every question. Cache the parsed document in memory for the active session.
+
+
+
+## PHASE 2 — MODERN AI CHAT
+
+
+
+Without changing backend architecture, improve the AI Chat experience.
+
+
+
+Add:
+
+
+
+• Streaming responses (if supported)
+
+
+
+• Better message bubbles
+
+
+
+• Typing animation
+
+
+
+• Better loading state
+
+
+
+• Retry failed message
+
+
+
+• Suggested Questions
+
+
+
+• Auto scroll
+
+
+
+• Better timestamps
+
+
+
+• Better conversation history
+
+
+
+• Better empty state
+
+
+
+• Better markdown rendering
+
+
+
+• Code syntax highlighting
+
+
+
+Quick Action Chips:
+
+
+
+* Explain Topic
+
+
+
+* Summarize Chapter
+
+
+
+* Generate MCQs
+
+
+
+* Solve Past Paper
+
+
+
+* Explain Mistakes
+
+
+
+* Study Planner
+
+
+
+* Formula Sheet
+
+
+
+* Definitions
+
+
+
+* Exam Tips
+
+
+
+Do not change the existing navigation.
+
+
+
+Only improve the AI Chat.
+
+
+
+---
+
+
+
+## PHASE 3 — QUALITY
+
+
+
+After implementation:
+
+
+
+Build the Android project.
+
+
+
+Fix every compilation error.
+
+
+
+Fix runtime errors.
+
+
+
+Verify AI Chat works.
+
+
+
+Verify previous conversation memory works.
+
+
+
+Verify uploaded PDFs remain available during the conversation.
+
+
+
+Verify image upload works.
+
+
+
+Commit changes.
+
+
+
+Push to GitHub.
+
+
+
+Stop.
+
+
+
+DO NOT implement Premium Resources or User Authentication in this task.
+
+Those will be implemented later as separate features.
