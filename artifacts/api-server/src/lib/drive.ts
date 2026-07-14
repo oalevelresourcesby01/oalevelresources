@@ -34,8 +34,14 @@ let syncState: SyncState = {
   totalFolders: null,
 };
 
+let cancelRequested = false;
+
 export function getSyncState(): SyncState {
   return { ...syncState };
+}
+
+export function requestCancelSync(): void {
+  cancelRequested = true;
 }
 
 // ── Google Drive API helper ────────────────────────────────────────────────
@@ -105,8 +111,13 @@ export async function scanDrive(
     ];
 
     let processed = 0;
+    cancelRequested = false;
 
     while (queue.length > 0) {
+      if (cancelRequested) {
+        throw new Error("Sync cancelled by user.");
+      }
+
       const item = queue.shift()!;
       seenDriveIds.add(item.driveId);
 

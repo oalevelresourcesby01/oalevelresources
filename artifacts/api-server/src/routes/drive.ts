@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth";
-import { runSync, runIncrementalSync, getCurrentSyncStatus } from "../lib/sync";
+import { runSync, runIncrementalSync, cancelSync, getCurrentSyncStatus } from "../lib/sync";
 import { validateDriveConfig } from "../lib/drive";
 import { pool } from "../db/index";
 
@@ -22,6 +22,12 @@ router.post("/drive/sync", requireAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ jobId: "error", status: "error", message: String(err) });
   }
+});
+
+// POST /api/drive/sync/cancel
+router.post("/drive/sync/cancel", requireAuth, (_req, res) => {
+  cancelSync();
+  res.json({ ok: true, message: "Cancel requested — sync will stop at the next checkpoint." });
 });
 
 // GET /api/drive/sync/status

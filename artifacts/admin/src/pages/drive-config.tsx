@@ -143,6 +143,20 @@ export default function DriveConfig() {
     }
   };
 
+  const handleCancelSync = async () => {
+    try {
+      const res = await fetch('/api/drive/sync/cancel', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast({ title: 'Cancel requested', description: 'The sync will stop after the current folder.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Could not cancel', description: error.message });
+    }
+  };
+
   const handleQuickSync = async () => {
     try {
       // Sends mode:"incremental" — server uses Drive Changes API (seconds, not hours)
@@ -326,6 +340,18 @@ export default function DriveConfig() {
                   </>
                 )}
               </div>
+
+              {/* Cancel button — only visible while a sync is running */}
+              {isSyncRunning && (
+                <Button
+                  onClick={handleCancelSync}
+                  variant="destructive"
+                  className="w-full mb-3"
+                >
+                  Stop Sync Now
+                </Button>
+              )}
+
               <div className="space-y-3">
                 <Button 
                   onClick={handleQuickSync}
@@ -352,7 +378,7 @@ export default function DriveConfig() {
                   variant="outline"
                   size="default"
                 >
-                  Full Scan (all {'\u2248'}28 000 folders)
+                  Full Scan (all ~28 000 folders)
                 </Button>
               </div>
             </CardContent>

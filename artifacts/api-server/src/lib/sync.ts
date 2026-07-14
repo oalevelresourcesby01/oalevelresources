@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { pool } from "../db/index";
 import { getConfig } from "./config";
-import { scanDrive, incrementalScanDrive, getSyncState } from "./drive";
+import { scanDrive, incrementalScanDrive, getSyncState, requestCancelSync } from "./drive";
 import { logger } from "./logger";
 import { dbLog } from "./dbLogger";
 
@@ -82,6 +82,10 @@ export async function runIncrementalSync(): Promise<string> {
     });
 
   return syncId;
+}
+
+export function cancelSync(): void {
+  requestCancelSync();
 }
 
 export async function startAutoSync(): Promise<void> {
