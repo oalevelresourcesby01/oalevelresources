@@ -66,12 +66,27 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
+// Hashed asset filenames (e.g. index-AbC123.js) are safe to cache forever;
+// index.html is not hashed, so it must always be revalidated — otherwise
+// browsers (and any intermediary proxy) can keep serving an old SPA shell
+// that references a bundle from a previous deploy indefinitely.
+const staticAssetOptions = {
+  setHeaders(res: Response, filePath: string) {
+    if (path.basename(filePath) === "index.html") {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    } else {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    }
+  },
+};
+
 if (adminDistExists) {
-  app.use("/admin", express.static(adminDistDir));
+  app.use("/admin", express.static(adminDistDir, staticAssetOptions));
 
   // SPA fallback: any non-API /admin/* route serves index.html so
   // client-side routing (react-router, etc.) works on hard refresh.
   app.get("/admin/*splat", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(path.join(adminDistDir, "index.html"));
   });
 
@@ -84,7 +99,7 @@ if (adminDistExists) {
 }
 
 if (webDistExists) {
-  app.use(express.static(webDistDir));
+  app.use(express.static(webDistDir, staticAssetOptions));
 
   // SPA fallback for the public site's client-side routes (react-router).
   // Registered after /admin and /api so it never shadows them.
@@ -93,6 +108,7 @@ if (webDistExists) {
       next();
       return;
     }
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(path.join(webDistDir, "index.html"));
   });
 } else {

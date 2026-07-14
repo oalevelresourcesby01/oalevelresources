@@ -1,2 +1,5 @@
 android/.gradle/
 android/**/build/
+artifacts/admin/dist/
+artifacts/web/dist/
+artifacts/api-server/dist/
