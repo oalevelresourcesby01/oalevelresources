@@ -20,6 +20,7 @@ export type ConfigKey =
   | "theme"
   | "autoSync"
   | "syncIntervalMinutes"
+  | "lastIncrementalSyncAt"
   | "cacheEnabled"
   | "cacheTtlMinutes"
   | "maxDownloadSizeMb"

@@ -369,7 +369,7 @@ export default function DriveConfig() {
                   )}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  Uses Google Drive Changes API — finishes in seconds, not hours.
+                  Only checks folders for new or edited files since the last sync — much faster than a full scan. Doesn't catch deletions; run a Full Scan periodically for those.
                 </p>
                 <Button 
                   onClick={handleTriggerSync} 

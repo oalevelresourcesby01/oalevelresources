@@ -84,6 +84,8 @@ export async function scanDrive(
   rootFolderId: string,
   syncRecordId: string
 ): Promise<void> {
+  const scanStartedAt = new Date();
+
   syncState = {
     status: "running",
     lastSync: null,
@@ -240,11 +242,9 @@ export async function scanDrive(
       [stats.filesAdded, stats.filesRemoved, stats.filesUpdated, stats.foldersAdded, syncRecordId]
     );
 
-    // Save a Drive Changes token so future quick syncs only fetch diffs
-    const changesToken = await fetchChangesStartToken(apiKey);
-    if (changesToken) {
-      await setConfig("driveChangesToken", changesToken);
-    }
+    // Record when this scan started so the next Quick Sync only looks at
+    // files modified after this point (see incrementalScanDrive below).
+    await setConfig("lastIncrementalSyncAt", scanStartedAt.toISOString());
 
     const now = new Date().toISOString();
     syncState = {
@@ -278,49 +278,185 @@ export async function scanDrive(
   }
 }
 
-// ── Drive Changes API helpers ──────────────────────────────────────────────
+// ── Quick (incremental) sync ────────────────────────────────────────────────
+//
+// NOTE: Google's Drive "Changes" API (`/drive/v3/changes`) requires an OAuth2
+// user token — it always 401s with a bare API key ("API keys are not
+// supported by this API"). Since this app only ever stores an API key, that
+// approach can never work, and silently degraded into a full re-scan every
+// time. Instead, Quick Sync re-queries only the folders we already know
+// about (from the last scan), asking Drive for children modified after the
+// last sync timestamp — the same `'<id>' in parents` query the full scan
+// already uses successfully with an API key, just batched and filtered.
+//
+// Trade-off: this reliably catches additions and edits, but a file deleted
+// from Drive simply stops appearing in listings — there's no cheap way to
+// detect that without re-listing every folder (i.e. a full scan). Run a
+// Full Scan periodically to reconcile deletions.
 
-async function fetchChangesStartToken(apiKey: string): Promise<string | null> {
-  try {
+const MAX_PARENTS_PER_QUERY = 40;
+
+function escapeQueryValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+async function listFilesForParentsSince(
+  apiKey: string,
+  parentDriveIds: string[],
+  sinceIso: string
+): Promise<DriveFile[]> {
+  const parentClause = parentDriveIds
+    .map((id) => `'${escapeQueryValue(id)}' in parents`)
+    .join(" or ");
+  const q = `(${parentClause}) and modifiedTime > '${sinceIso}' and trashed=false`;
+
+  const all: DriveFile[] = [];
+  let pageToken: string | undefined;
+  do {
     const params = new URLSearchParams({
       key: apiKey,
-      supportsAllDrives: "true",
+      q,
+      fields: "nextPageToken,files(id,name,mimeType,size,modifiedTime,parents)",
+      pageSize: "200",
     });
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/changes/startPageToken?${params}`
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { startPageToken?: string };
-    return data.startPageToken ?? null;
-  } catch {
-    return null;
+    if (pageToken) params.set("pageToken", pageToken);
+
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Drive API error ${res.status}: ${text}`);
+    }
+    const data = (await res.json()) as { files: DriveFile[]; nextPageToken?: string };
+    all.push(...data.files);
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return all;
+}
+
+/**
+ * Upserts a single Drive file/folder into `resources` and reports whether it
+ * was newly added, returning its internal resource id.
+ */
+async function upsertOneResource(
+  file: DriveFile,
+  parentResourceId: string | null,
+  depth: number,
+  existingMap: Map<string, { id: string; depth: number }>
+): Promise<{ resourceId: string; isNew: boolean; isFolder: boolean }> {
+  const isFolder = file.mimeType === FOLDER_MIME;
+  const prior = existingMap.get(file.id);
+  const isNew = !prior;
+  const resourceId = prior?.id ?? uuidv4();
+
+  await pool.query(
+    `INSERT INTO resources
+       (id, drive_id, name, type, parent_id, depth, mime_type, size, modified_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+     ON CONFLICT (drive_id) DO UPDATE SET
+       name        = EXCLUDED.name,
+       parent_id   = EXCLUDED.parent_id,
+       depth       = EXCLUDED.depth,
+       size        = EXCLUDED.size,
+       modified_at = EXCLUDED.modified_at,
+       updated_at  = NOW()`,
+    [
+      resourceId,
+      file.id,
+      file.name,
+      isFolder ? "folder" : "pdf",
+      parentResourceId,
+      depth,
+      file.mimeType,
+      file.size ? parseInt(file.size, 10) : null,
+      file.modifiedTime ?? null,
+    ]
+  );
+
+  existingMap.set(file.id, { id: resourceId, depth });
+  return { resourceId, isNew, isFolder };
+}
+
+/**
+ * Fully scans one or more brand-new folders (found by the quick sync below)
+ * that were not previously known, since Drive won't surface their
+ * grandchildren via a parent-scoped query until we've seen the folder itself.
+ */
+async function scanNewSubtrees(
+  apiKey: string,
+  startItems: { driveId: string; parentResourceId: string | null; depth: number }[],
+  existingMap: Map<string, { id: string; depth: number }>,
+  stats: { filesAdded: number; filesRemoved: number; filesUpdated: number; foldersAdded: number }
+): Promise<void> {
+  const queue = [...startItems];
+
+  while (queue.length > 0) {
+    if (cancelRequested) throw new Error("Sync cancelled by user.");
+
+    const item = queue.shift()!;
+    let files: DriveFile[];
+    try {
+      files = await listAllInFolder(apiKey, item.driveId);
+    } catch (err) {
+      logger.warn({ err, driveId: item.driveId }, "Error listing new subtree folder");
+      continue;
+    }
+
+    for (const file of files) {
+      const { resourceId, isNew, isFolder } = await upsertOneResource(
+        file,
+        item.parentResourceId,
+        item.depth + 1,
+        existingMap
+      );
+      if (isNew) {
+        if (isFolder) stats.foldersAdded++;
+        else stats.filesAdded++;
+      } else {
+        stats.filesUpdated++;
+      }
+      if (isFolder) {
+        queue.push({ driveId: file.id, parentResourceId: resourceId, depth: item.depth + 1 });
+      }
+    }
   }
 }
 
 /**
- * Incremental sync — uses the Drive Changes API to process only files/folders
- * that changed since the last full or incremental sync. Orders of magnitude
- * faster than a full BFS crawl for large hierarchies. Falls back to a full
- * scan automatically when no saved token exists (i.e. first run).
+ * Quick sync — only asks Drive for files/folders modified since the last
+ * sync, scoped to folders we already know about. Orders of magnitude faster
+ * than a full BFS crawl on large trees. Falls back to a full scan
+ * automatically on the very first run (no baseline timestamp yet).
+ *
+ * Known limitation: does not detect files deleted from Drive. Run a Full
+ * Scan periodically (or after bulk deletions) to reconcile removals.
  */
 export async function incrementalScanDrive(
   apiKey: string,
   rootFolderId: string,
   syncRecordId: string
 ): Promise<void> {
-  const storedToken = await getConfig("driveChangesToken");
+  const sinceIso = await getConfig("lastIncrementalSyncAt");
 
-  if (!storedToken) {
-    // First sync ever — fall back to full scan which will save a token at the end
-    dbLog("info", "No changes token — falling back to full scan");
+  if (!sinceIso) {
+    dbLog("info", "No previous sync timestamp — running a full scan first");
     return scanDrive(apiKey, rootFolderId, syncRecordId);
   }
+
+  const scanStartedAt = new Date();
+  cancelRequested = false;
 
   syncState = {
     status: "running",
     lastSync: null,
     progress: 0,
-    message: "Fetching changes from Drive...",
+    message: "Checking known folders for changes...",
     totalFiles: 0,
     totalFolders: 0,
   };
@@ -328,104 +464,62 @@ export async function incrementalScanDrive(
   const stats = { filesAdded: 0, filesRemoved: 0, filesUpdated: 0, foldersAdded: 0 };
 
   try {
-    let pageToken: string = storedToken;
-    let newStartPageToken: string | null = null;
+    const { rows: knownFolders } = await pool.query(
+      "SELECT drive_id, id, depth FROM resources WHERE type='folder'"
+    );
+    const existingMap = new Map<string, { id: string; depth: number }>(
+      knownFolders.map((r) => [r.drive_id as string, { id: r.id as string, depth: r.depth as number }])
+    );
+    // Also load non-folder resources into the map so parent/child depth lookups
+    // and "is this new" checks work for files too.
+    const { rows: knownFiles } = await pool.query(
+      "SELECT drive_id, id, depth FROM resources WHERE type='pdf'"
+    );
+    for (const r of knownFiles) {
+      existingMap.set(r.drive_id as string, { id: r.id as string, depth: r.depth as number });
+    }
+
+    // Root isn't stored as a resource — treat it as a virtual known parent.
+    const parentIdsToQuery = [rootFolderId, ...knownFolders.map((r) => r.drive_id as string)];
+    const batches = chunk(parentIdsToQuery, MAX_PARENTS_PER_QUERY);
+
+    const newFolderStarts: { driveId: string; parentResourceId: string | null; depth: number }[] = [];
     let processed = 0;
 
-    while (pageToken) {
-      const params = new URLSearchParams({
-        key: apiKey,
-        pageToken,
-        includeRemoved: "true",
-        supportsAllDrives: "true",
-        includeItemsFromAllDrives: "true",
-        pageSize: "1000",
-        fields:
-          "nextPageToken,newStartPageToken,changes(removed,fileId,file(id,name,mimeType,size,modifiedTime,parents,trashed))",
-      });
+    for (const batch of batches) {
+      if (cancelRequested) throw new Error("Sync cancelled by user.");
 
-      const res = await fetch(
-        `https://www.googleapis.com/drive/v3/changes?${params}`
-      );
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Drive Changes API error ${res.status}: ${text}`);
-      }
+      syncState.message = `Scanning for changes... (batch ${processed + 1}/${batches.length})`;
+      syncState.progress = Math.min(90, Math.round((processed / batches.length) * 90));
 
-      interface DriveChange {
-        removed: boolean;
-        fileId: string;
-        file?: DriveFile & { trashed?: boolean };
-      }
-      const data = (await res.json()) as {
-        nextPageToken?: string;
-        newStartPageToken?: string;
-        changes: DriveChange[];
-      };
-
-      if (data.newStartPageToken) newStartPageToken = data.newStartPageToken;
-
-      for (const change of data.changes) {
+      let files: DriveFile[];
+      try {
+        files = await listFilesForParentsSince(apiKey, batch, sinceIso);
+      } catch (err) {
+        logger.warn({ err }, "Error querying batch for changes");
+        dbLog("warn", "Quick sync batch query failed", String(err));
         processed++;
-        syncState.message = `Processing ${processed} change(s)...`;
-        syncState.progress = Math.min(90, processed * 2);
+        continue;
+      }
 
-        if (change.removed || change.file?.trashed) {
-          // Deleted or trashed — remove from our DB and cascade children
-          await pool.query("DELETE FROM resources WHERE drive_id = $1", [change.fileId]);
-          stats.filesRemoved++;
-          continue;
-        }
-
-        const f = change.file;
-        if (!f) continue;
-
-        const isFolder = f.mimeType === FOLDER_MIME;
-
-        // Resolve parent UUID from the Drive parent ID
-        let parentId: string | null = null;
+      for (const file of files) {
+        const driveParentId = file.parents?.[0];
+        let parentResourceId: string | null = null;
         let depth = 1;
-        if (f.parents && f.parents.length > 0) {
-          const driveParentId = f.parents[0]!;
-          if (driveParentId === rootFolderId) {
-            // Direct child of root — parentId stays null (root isn't stored)
-          } else {
-            const { rows: parentRows } = await pool.query(
-              "SELECT id, depth FROM resources WHERE drive_id = $1",
-              [driveParentId]
-            );
-            if (parentRows.length > 0) {
-              parentId = parentRows[0].id as string;
-              depth = ((parentRows[0].depth as number) ?? 0) + 1;
-            }
+        if (driveParentId && driveParentId !== rootFolderId) {
+          const parentInfo = existingMap.get(driveParentId);
+          if (parentInfo) {
+            parentResourceId = parentInfo.id;
+            depth = parentInfo.depth + 1;
           }
         }
 
-        const { rows: existing } = await pool.query(
-          "SELECT id FROM resources WHERE drive_id = $1",
-          [f.id]
-        );
-        const isNew = existing.length === 0;
-        const resourceId = isNew ? uuidv4() : (existing[0].id as string);
-
-        await pool.query(
-          `INSERT INTO resources
-             (id, drive_id, name, type, parent_id, depth, mime_type, size, modified_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-           ON CONFLICT (drive_id) DO UPDATE SET
-             name        = EXCLUDED.name,
-             parent_id   = EXCLUDED.parent_id,
-             depth       = EXCLUDED.depth,
-             size        = EXCLUDED.size,
-             modified_at = EXCLUDED.modified_at,
-             updated_at  = NOW()`,
-          [
-            resourceId, f.id, f.name,
-            isFolder ? "folder" : "pdf",
-            parentId, depth, f.mimeType,
-            f.size ? parseInt(f.size, 10) : null,
-            f.modifiedTime ?? null,
-          ]
+        const wasKnownFolder = file.mimeType === FOLDER_MIME && existingMap.has(file.id);
+        const { resourceId, isNew, isFolder } = await upsertOneResource(
+          file,
+          parentResourceId,
+          depth,
+          existingMap
         );
 
         if (isNew) {
@@ -434,14 +528,24 @@ export async function incrementalScanDrive(
         } else {
           stats.filesUpdated++;
         }
+
+        // A folder we hadn't seen before (or now seeing for the first time)
+        // may itself contain children Drive won't surface via this
+        // parent-scoped query yet — walk into it explicitly.
+        if (isFolder && !wasKnownFolder) {
+          newFolderStarts.push({ driveId: file.id, parentResourceId: resourceId, depth });
+        }
       }
 
-      pageToken = data.nextPageToken ?? "";
+      processed++;
     }
 
-    // Persist the new token for the next incremental sync
-    if (newStartPageToken) {
-      await setConfig("driveChangesToken", newStartPageToken);
+    syncState.message = newFolderStarts.length
+      ? `Found ${newFolderStarts.length} new folder(s) — scanning their contents...`
+      : "Finalizing...";
+
+    if (newFolderStarts.length > 0) {
+      await scanNewSubtrees(apiKey, newFolderStarts, existingMap, stats);
     }
 
     await pool.query(
@@ -452,6 +556,10 @@ export async function incrementalScanDrive(
       [stats.filesAdded, stats.filesRemoved, stats.filesUpdated, stats.foldersAdded, syncRecordId]
     );
 
+    // Only advance the baseline once everything succeeded, so a failed run
+    // doesn't silently skip the window it was supposed to cover.
+    await setConfig("lastIncrementalSyncAt", scanStartedAt.toISOString());
+
     const now = new Date().toISOString();
     const changedCount = stats.filesAdded + stats.filesRemoved + stats.filesUpdated + stats.foldersAdded;
     syncState = {
@@ -459,13 +567,13 @@ export async function incrementalScanDrive(
       lastSync: now,
       progress: 100,
       message: changedCount === 0
-        ? "Quick sync complete — no changes in Drive."
-        : `Quick sync complete. ${stats.filesAdded} added, ${stats.filesRemoved} removed, ${stats.filesUpdated} updated.`,
+        ? "Quick sync complete — no changes found."
+        : `Quick sync complete. ${stats.filesAdded} added, ${stats.filesUpdated} updated, ${stats.foldersAdded} new folders. (Deletions aren't detected by Quick Sync — run a Full Scan to catch those.)`,
       totalFiles: stats.filesAdded,
       totalFolders: stats.foldersAdded,
     };
 
-    dbLog("info", "Incremental Drive sync complete", JSON.stringify(stats));
+    dbLog("info", "Quick sync complete", JSON.stringify(stats));
   } catch (err) {
     const msg = String(err);
     syncState = {
@@ -480,7 +588,7 @@ export async function incrementalScanDrive(
       "UPDATE sync_records SET completed_at = NOW(), status = 'error', error_message = $1 WHERE id = $2",
       [msg, syncRecordId]
     );
-    dbLog("error", "Incremental Drive sync failed", msg);
+    dbLog("error", "Quick sync failed", msg);
     throw err;
   }
 }
