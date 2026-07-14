@@ -245,7 +245,7 @@ fun PdfViewerScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        "Choose pages to extract from "$displayName" and share as a smaller PDF.",
+                        "Choose pages to extract from \"$displayName\" and share as a smaller PDF.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

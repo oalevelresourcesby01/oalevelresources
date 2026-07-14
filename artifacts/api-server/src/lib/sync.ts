@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { pool } from "../db/index";
 import { getConfig } from "./config";
-import { scanDrive, getSyncState } from "./drive";
+import { scanDrive, incrementalScanDrive, getSyncState } from "./drive";
 import { logger } from "./logger";
 import { dbLog } from "./dbLogger";
 
@@ -41,6 +41,44 @@ export async function runSync(force = false): Promise<string> {
     .catch((err) => {
       isSyncing = false;
       logger.error({ err, syncId }, "Drive sync failed");
+    });
+
+  return syncId;
+}
+
+export async function runIncrementalSync(): Promise<string> {
+  if (isSyncing) {
+    const { rows } = await pool.query(
+      "SELECT id FROM sync_records WHERE status='running' ORDER BY started_at DESC LIMIT 1"
+    );
+    return rows[0]?.id ?? "already-running";
+  }
+
+  const apiKey = await getConfig("driveApiKey");
+  const rootFolderId = await getConfig("driveRootFolderId");
+
+  if (!apiKey || !rootFolderId) {
+    throw new Error("Google Drive not configured. Set API Key and Root Folder ID in settings.");
+  }
+
+  const syncId = uuidv4();
+  await pool.query(
+    "INSERT INTO sync_records (id, started_at, status) VALUES ($1, NOW(), 'running')",
+    [syncId]
+  );
+
+  isSyncing = true;
+  dbLog("info", "Incremental Drive sync started", `syncId=${syncId}`);
+
+  // Run async — don't await
+  incrementalScanDrive(apiKey, rootFolderId, syncId)
+    .then(() => {
+      isSyncing = false;
+      logger.info({ syncId }, "Incremental Drive sync completed");
+    })
+    .catch((err) => {
+      isSyncing = false;
+      logger.error({ err, syncId }, "Incremental Drive sync failed");
     });
 
   return syncId;

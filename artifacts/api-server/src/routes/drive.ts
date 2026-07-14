@@ -1,17 +1,23 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth";
-import { runSync, getCurrentSyncStatus } from "../lib/sync";
+import { runSync, runIncrementalSync, getCurrentSyncStatus } from "../lib/sync";
 import { validateDriveConfig } from "../lib/drive";
 import { pool } from "../db/index";
 
 const router = Router();
 
-// POST /api/drive/sync
+// POST /api/drive/sync  (full scan; pass mode:"incremental" for delta sync)
 router.post("/drive/sync", requireAuth, async (req, res) => {
-  const { force = false } = (req.body ?? {}) as { force?: boolean };
+  const { force = false, mode = "full" } = (req.body ?? {}) as {
+    force?: boolean;
+    mode?: "full" | "incremental";
+  };
 
   try {
-    const jobId = await runSync(force);
+    const jobId =
+      mode === "incremental"
+        ? await runIncrementalSync()
+        : await runSync(force);
     res.json({ jobId, status: "started", message: "Sync job started" });
   } catch (err) {
     res.status(500).json({ jobId: "error", status: "error", message: String(err) });

@@ -131,13 +131,30 @@ export default function DriveConfig() {
     try {
       await triggerSync.mutateAsync({ data: { force: true } });
       toast({
-        title: 'Sync triggered',
-        description: 'The synchronization process has started in the background.'
+        title: 'Full sync triggered',
+        description: 'Scanning all 28 000+ folders — this takes a while.'
       });
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Failed to start sync',
+        description: error.message || 'An error occurred.'
+      });
+    }
+  };
+
+  const handleQuickSync = async () => {
+    try {
+      // Sends mode:"incremental" — server uses Drive Changes API (seconds, not hours)
+      await triggerSync.mutateAsync({ data: { force: true, mode: 'incremental' } as any });
+      toast({
+        title: 'Quick sync started',
+        description: 'Fetching only files that changed since the last sync.'
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Quick sync failed',
         description: error.message || 'An error occurred.'
       });
     }
@@ -309,14 +326,35 @@ export default function DriveConfig() {
                   </>
                 )}
               </div>
-              <Button 
-                onClick={handleTriggerSync} 
-                disabled={isSyncRunning || triggerSync.isPending || !config?.driveApiKeySet}
-                className="w-full text-md py-6"
-                size="lg"
-              >
-                {triggerSync.isPending ? 'Starting...' : isSyncRunning ? 'Syncing...' : 'Force Sync Now'}
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleQuickSync}
+                  disabled={isSyncRunning || triggerSync.isPending || !config?.driveApiKeySet}
+                  className="w-full text-md py-5"
+                  size="lg"
+                  variant="default"
+                >
+                  {triggerSync.isPending ? (
+                    <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Starting...</>
+                  ) : isSyncRunning ? (
+                    <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Syncing...</>
+                  ) : (
+                    <><RefreshCw className="mr-2 h-4 w-4" /> Quick Sync (changes only)</>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  Uses Google Drive Changes API — finishes in seconds, not hours.
+                </p>
+                <Button 
+                  onClick={handleTriggerSync} 
+                  disabled={isSyncRunning || triggerSync.isPending || !config?.driveApiKeySet}
+                  className="w-full"
+                  variant="outline"
+                  size="default"
+                >
+                  Full Scan (all {'\u2248'}28 000 folders)
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
