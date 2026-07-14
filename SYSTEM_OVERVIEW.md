@@ -1,6 +1,6 @@
 # OALevel Resources — System Overview
 
-> Last updated: July 2026 · Auto-generated from codebase analysis
+> Last updated: July 14, 2026 · Auto-generated from codebase analysis
 
 ---
 
@@ -108,7 +108,7 @@ Base path: `/api`
 | `/api/auth` | `POST /login`, `POST /change-password` | Login: No; Change-password: Yes |
 | `/api/resources` | `GET /tree`, `GET /:id`, `GET /:id/download` | No (public) |
 | `/api/drive` | `POST /sync`, `GET /status`, `POST /validate` | Yes (admin) |
-| `/api/ai` | `POST /chat`, `GET /sessions`, `GET /sessions/:id` | No (public) |
+| `/api/ai` | `POST /chat` (`message`, `sessionId`, `model`, `pdfText?`, `imageBase64?`), `GET /sessions`, `GET /sessions/:id` | No (public) |
 | `/api/knowledge` | `POST /index`, `GET /status`, `DELETE /chunks` | Yes (admin) |
 | `/api/config` | `GET /`, `PUT /` | Yes (admin) |
 | `/api/logs` | `GET /` | Yes (admin) |
@@ -146,12 +146,30 @@ Admin UI
 ### AI Chat (RAG)
 ```
 User types question
-  └─→ POST /api/ai/chat  { sessionId, message }
-        └─→ Full-text search on `knowledge_chunks` (relevant PDF excerpts)
-              └─→ Chunks injected as context into LLM prompt
+  └─→ POST /api/ai/chat  { sessionId, message, pdfText?, imageBase64? }
+        └─→ Concurrently:
+              ├─→ searchKnowledge() — full-text search on `knowledge_chunks`,
+              │     then expandWithNeighborChunks() pulls in immediately
+              │     adjacent chunks so the LLM sees contiguous document
+              │     context instead of isolated fragments
+              └─→ searchResourceTitles() — ILIKE match on `resources.name`
+                    so "do you have X?" can be answered from the real
+                    title catalog even without a content-chunk match
+        └─→ Results merged into `knowledgeContext` with a distinct
+              "AVAILABLE RESOURCE TITLES" section
+              └─→ System prompt enforces explicit priority order:
+                    (1) current uploaded document (if any, highest priority)
+                    (2) indexed knowledge_chunks library
+                    (3) general model knowledge — last resort only
                     └─→ OpenRouter API (model from `config` table)
                           └─→ Response + `relatedResources` returned to client
 ```
+
+> **Client-side document persistence (Android):** the currently attached PDF
+> is promoted to an `activeDocument` and reused on every follow-up turn in
+> the session — the client no longer re-uploads/re-parses it per question,
+> and the AI keeps answering from the same document until the user detaches
+> it. PDFs are parsed in full (no longer capped at the first 20 pages).
 
 ### PDF Knowledge Indexing
 ```
@@ -183,12 +201,31 @@ Defined in `render.yaml` at the repo root.
 
 ```
 GitHub Push → Render detects change → Build pipeline:
-  1. pnpm install (workspace root)
-  2. pnpm --filter @workspace/admin build   → artifacts/admin/dist/
-  3. pnpm --filter @workspace/web build     → artifacts/web/dist/
-  4. pnpm --filter @workspace/api-server build → artifacts/api-server/dist/
-  5. Start: node artifacts/api-server/dist/index.js  (port 10000)
+  1. pnpm install --frozen-lockfile (workspace root)
+  2. pnpm --filter @workspace/admin build       → artifacts/admin/dist/public/
+  3. pnpm --filter @workspace/web build         → artifacts/web/dist/public/
+  4. pnpm --filter @workspace/api-server build  → artifacts/api-server/dist/
+  5. Start: node --enable-source-maps artifacts/api-server/dist/index.mjs  (port 10000)
 ```
+
+Built `dist/` output is **no longer committed to git** (previously it was,
+which caused Render to serve a stale admin/web bundle after every deploy).
+`artifacts/{admin,web,api-server}/dist` are now git-ignored and rebuilt fresh
+on every deploy by the build pipeline above.
+
+> **Dashboard/Blueprint gotcha:** `render.yaml` is only authoritative if the
+> Render service was created via Blueprint with auto-sync on. If the service
+> was created manually before `render.yaml` existed, its dashboard **Build
+> Command** can silently diverge from the file (e.g. missing the
+> `admin`/`web` `vite build` steps) — which serves `Cannot GET /admin/` once
+> `dist/` is no longer committed, since nothing rebuilds it. Always confirm
+> Settings → Build & Deploy → Build Command matches step 1–4 above after
+> changing `render.yaml`.
+
+Static asset caching: `artifacts/api-server/src/app.ts` sets `Cache-Control`
+per file — `index.html` is always `no-cache, no-store, must-revalidate` (so
+clients never get stuck on a stale SPA shell after a deploy), while hashed
+JS/CSS bundle files are cached `public, max-age=31536000, immutable`.
 
 Environment variables set in Render dashboard:
 - `DATABASE_URL` — Neon PostgreSQL connection string
@@ -207,6 +244,11 @@ UI Layer (Jetpack Compose)
   ├── HomeScreen — folder tree, search
   ├── PdfViewerScreen — split view (Question Paper + Mark Scheme)
   └── AiChatScreen — context-aware AI chat
+        ├── Persistent "active document" banner — attached PDF stays bound
+        │     to the conversation across turns until explicitly detached
+        ├── ErrorBanner — retry/dismiss on a failed send
+        ├── QuickActionChips — preset prompt-prefix shortcuts
+        └── Fenced ```code``` blocks render in a distinct monospace box
 
 ViewModel Layer (Hilt-injected)
   └── Observes StateFlow from repositories
