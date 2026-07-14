@@ -22,4 +22,4 @@ The remote URL must be the plain HTTPS form: `https://github.com/oalevelresource
 - Hook uses `git symbolic-ref --short HEAD` to get current branch (not hardcoded `main`)
 
 ## Caution
-The global git config credential helper may not persist across Replit restarts. If pushes fail, re-run the `git config --global credential.helper` command above.
+The global git config credential helper may not persist across Replit restarts. If pushes fail, re-run the `git config --global credential.helper` command above — this is the first thing to try before assuming the token itself is dead, since "Invalid username or token" can also mean the helper reference to `$GITHUB_TOKEN` was lost, not that the token needs rotating.
