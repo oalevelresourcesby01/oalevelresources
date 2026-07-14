@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { pool } from "../db/index";
 import { requireAuth } from "../middlewares/auth";
 import { sendAiMessage, getAvailableModels } from "../lib/ai";
-import { searchKnowledge, logAiSearch } from "../lib/knowledge";
+import { searchKnowledge, searchResourceTitles, logAiSearch } from "../lib/knowledge";
 import { getConfig } from "../lib/config";
 import { dbLog } from "../lib/dbLogger";
 
@@ -171,18 +171,35 @@ router.post("/ai/chat", async (req, res) => {
 
   try {
     // ── Search knowledge index before calling the AI ──────────────────────
-    const knowledgeResults = await searchKnowledge(message, 5);
+    // Two independent lookups: content search (finds relevant passages) and
+    // title search (finds resources that exist even if their content wasn't
+    // a close text match) — together these let the AI answer "do you have
+    // X?" style questions from the real resource catalog instead of saying
+    // "I don't know".
+    const [knowledgeResults, titleMatches] = await Promise.all([
+      searchKnowledge(message, 5),
+      searchResourceTitles(message),
+    ]);
     const relatedResources = knowledgeResults.map((r) => ({
       resourceId: r.resourceId,
       resourceName: r.resourceName,
     }));
 
-    let knowledgeContext: string | undefined;
-    if (knowledgeResults.length > 0) {
-      knowledgeContext = knowledgeResults
-        .map((r, i) => `[Resource ${i + 1}: ${r.resourceName}]\n${r.content}`)
-        .join("\n\n---\n\n");
+    const contextParts: string[] = [];
+    if (titleMatches.length > 0) {
+      contextParts.push(
+        `AVAILABLE RESOURCE TITLES (these documents exist in the app; mention them by name if relevant to the question, even if you don't have their full content below):\n` +
+          titleMatches.map((t) => `- ${t.name}`).join("\n")
+      );
     }
+    if (knowledgeResults.length > 0) {
+      contextParts.push(
+        knowledgeResults
+          .map((r, i) => `[Resource ${i + 1}: ${r.resourceName}]\n${r.content}`)
+          .join("\n\n---\n\n")
+      );
+    }
+    const knowledgeContext = contextParts.length > 0 ? contextParts.join("\n\n===\n\n") : undefined;
 
     logAiSearch(message, knowledgeResults.length, relatedResources.map((r) => r.resourceName));
 

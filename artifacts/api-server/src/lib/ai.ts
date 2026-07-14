@@ -77,11 +77,25 @@ export async function sendAiMessage(
     allMessages.push({ role: "system", content: systemPrompt });
   }
 
+  // Explicit source priority — the AI must never jump straight to general
+  // knowledge. Order: 1) the document the user just uploaded, 2) the app's
+  // indexed PDF library (which includes everything synced from Drive),
+  // 3) general knowledge only as a last resort.
+  allMessages.push({
+    role: "system",
+    content:
+      "When answering, use this priority order for information sources: " +
+      "(1) the CURRENT UPLOADED DOCUMENT attached to this message, if any — treat it as ground truth for questions about it; " +
+      "(2) the app's indexed resource library (shown below as RELEVANT EDUCATIONAL RESOURCES / AVAILABLE RESOURCE TITLES) — this covers every PDF already stored in the app, including ones synced from Google Drive; " +
+      "(3) only fall back to your own general knowledge if neither source has the answer. " +
+      "If multiple indexed resources are relevant, combine information from all of them. Whenever you use an indexed resource or the uploaded document, mention its title/name in your answer.",
+  });
+
   // Inject knowledge context as a system message so the model sees it before user messages
   if (knowledgeContext) {
     allMessages.push({
       role: "system",
-      content: `RELEVANT EDUCATIONAL RESOURCES (use these as your primary source):\n\n${knowledgeContext}\n\nBase your answer on the above resources where possible. Always cite which resource(s) you used by name (e.g. "According to [Resource Name]...").`,
+      content: `${knowledgeContext}\n\nBase your answer on the above resources where possible, per the priority order above. Always cite which resource(s) you used by name (e.g. "According to [Resource Name]...").`,
     });
   }
 
@@ -119,7 +133,7 @@ export async function sendAiMessage(
       if (pdfText) {
         contentParts[0] = {
           type: "text",
-          text: `${msg.content as string}\n\n[PDF Content]:\n${pdfText}`,
+          text: `${msg.content as string}\n\n[CURRENT UPLOADED DOCUMENT — highest-priority source, answer from this first when relevant]:\n${pdfText}`,
         };
       }
       return { ...msg, content: contentParts };

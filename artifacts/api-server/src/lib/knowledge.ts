@@ -321,12 +321,105 @@ export async function searchKnowledge(
       if (byResource.size >= limit) break;
     }
 
-    // Flatten: sort each resource's chunks by document position
-    return Array.from(byResource.values()).flatMap((chunks) =>
+    const topHits = Array.from(byResource.values()).flatMap((chunks) =>
       chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
     );
+
+    // Pull in the immediate neighbor chunks (previous/next page-ish section)
+    // of each matched chunk, even if they didn't independently match the
+    // query. A single 1500-char chunk is often a fragment of a larger
+    // explanation — reading its neighbors lets the AI use the complete
+    // surrounding context instead of an isolated snippet.
+    return await expandWithNeighborChunks(topHits);
   } catch (err) {
     dbLog("warn", "Knowledge search failed", String(err));
+    return [];
+  }
+}
+
+async function expandWithNeighborChunks(
+  hits: KnowledgeSearchResult[]
+): Promise<KnowledgeSearchResult[]> {
+  if (hits.length === 0) return hits;
+
+  const seen = new Map<string, KnowledgeSearchResult>();
+  for (const h of hits) seen.set(`${h.resourceId}:${h.chunkIndex}`, h);
+
+  const neighborLookups: Promise<void>[] = [];
+  for (const hit of hits) {
+    for (const idx of [hit.chunkIndex - 1, hit.chunkIndex + 1]) {
+      if (idx < 0) continue;
+      const key = `${hit.resourceId}:${idx}`;
+      if (seen.has(key)) continue;
+      seen.set(key, undefined as unknown as KnowledgeSearchResult); // reserve slot to avoid duplicate fetches
+      neighborLookups.push(
+        pool
+          .query(
+            "SELECT resource_id, resource_name, chunk_index, content FROM knowledge_chunks WHERE resource_id = $1 AND chunk_index = $2",
+            [hit.resourceId, idx]
+          )
+          .then(({ rows }) => {
+            if (rows.length > 0) {
+              const r = rows[0];
+              seen.set(key, {
+                resourceId: r.resource_id,
+                resourceName: r.resource_name,
+                chunkIndex: r.chunk_index,
+                content: r.content,
+                score: 0, // neighbor, not independently ranked
+              });
+            } else {
+              seen.delete(key);
+            }
+          })
+      );
+    }
+  }
+  await Promise.all(neighborLookups);
+
+  // Group by resource, order by chunk position, so the AI reads each
+  // document's context contiguously and in the correct page order.
+  const byResource = new Map<string, KnowledgeSearchResult[]>();
+  for (const v of seen.values()) {
+    if (!v) continue;
+    const arr = byResource.get(v.resourceId) ?? [];
+    arr.push(v);
+    byResource.set(v.resourceId, arr);
+  }
+
+  return Array.from(byResource.values()).flatMap((chunks) =>
+    chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
+  );
+}
+
+// ── Resource title search (for "do you have X?" style questions) ──────────────
+//
+// Content search (`searchKnowledge`) only matches chunks whose *text* is
+// relevant. It won't find "Chemistry Notes" if the user just asks "do you
+// have Chemistry Notes?" without that exact wording appearing inside the
+// document body. This searches resource *names* directly so the AI always
+// knows what's actually available in the app, not just what was indexed.
+export async function searchResourceTitles(
+  query: string,
+  limit = 15
+): Promise<{ resourceId: string; name: string }[]> {
+  const words = query
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length >= 3)
+    .slice(0, 8);
+  if (words.length === 0) return [];
+
+  try {
+    const conditions = words.map((_, i) => `name ILIKE ${i + 1}`).join(" OR ");
+    const params = [...words.map((w) => `%${w}%`), limit];
+    const { rows } = await pool.query(
+      `SELECT id, name FROM resources WHERE type = 'pdf' AND (${conditions}) LIMIT ${words.length + 1}`,
+      params
+    );
+    return rows.map((r) => ({ resourceId: r.id, name: r.name }));
+  } catch (err) {
+    dbLog("warn", "Resource title search failed", String(err));
     return [];
   }
 }

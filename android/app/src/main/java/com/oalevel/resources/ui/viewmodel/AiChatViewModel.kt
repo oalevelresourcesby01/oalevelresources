@@ -45,7 +45,20 @@ data class AiChatUiState(
     val isSending: Boolean = false,
     val error: String? = null,
     val sessionId: String = UUID.randomUUID().toString(),
-    val attachment: AiAttachment? = null
+    val attachment: AiAttachment? = null,
+    // The most recently uploaded document, kept for the whole conversation
+    // (until cleared or the session is reset) so follow-up questions like
+    // "what's on page 12?" don't require re-uploading the file, and the PDF
+    // is only ever parsed once rather than on every question.
+    val activeDocument: AiAttachment? = null,
+    // The last user turn (text + attachment) that failed to send, kept so
+    // the UI can offer a one-tap "Retry" action instead of forcing retyping.
+    val lastFailedTurn: PendingTurn? = null
+)
+
+data class PendingTurn(
+    val displayText: String,
+    val attachment: AiAttachment?
 )
 
 @HiltViewModel
@@ -57,6 +70,13 @@ class AiChatViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(AiChatUiState())
     val uiState: StateFlow<AiChatUiState> = _uiState.asStateFlow()
+
+    companion object {
+        // Stay safely under the server's 200k-char cap while still covering
+        // documents with hundreds of pages.
+        private const val MAX_PDF_CHARS = 190_000
+        private const val MAX_PDF_PAGES = 400
+    }
 
     init {
         restoreSession()
@@ -124,12 +144,19 @@ class AiChatViewModel @Inject constructor(
 
     /**
      * Attach a PDF/document.  Strategy:
-     *  1. Try PDFBox text extraction.
+     *  1. Try PDFBox text extraction across the WHOLE document (up to
+     *     MAX_PDF_PAGES), with per-page markers so the AI can answer
+     *     "what's on page N" and other page-specific questions, and so
+     *     page order is always preserved.
      *  2. If the extracted text is sparse (< 120 chars, i.e. scanned/image-only PDF),
-     *     render the first page with Android's PdfRenderer at 2.5× scale and send it
+     *     render the first page with Android's PdfRenderer at 1.5× scale and send it
      *     as a base-64 JPEG image so the vision model can read diagrams, handwriting
      *     and typeset formulas that PDFBox cannot extract.
-     *  3. Otherwise send the plain text (capped at 15 000 chars).
+     *  3. Otherwise send the plain text (capped at MAX_PDF_CHARS).
+     *
+     * The parsed result is cached in [AiChatUiState.activeDocument] once sent,
+     * so it stays part of the conversation for follow-up questions without
+     * ever being re-parsed.
      */
     fun onFileAttached(fileName: String, uri: Uri) {
         _uiState.update {
@@ -144,7 +171,7 @@ class AiChatViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            // ── Step 1: text extraction (capped to first 20 pages for speed) ──────
+            // ── Step 1: text extraction across the whole document ─────────────
             _uiState.update { s ->
                 s.copy(attachment = s.attachment?.copy(extractionProgress = 0.2f))
             }
@@ -153,11 +180,29 @@ class AiChatViewModel @Inject constructor(
                     PDFBoxResourceLoader.init(context)
                     context.contentResolver.openInputStream(uri)?.use { input ->
                         PDDocument.load(input).use { doc ->
-                            val stripper = PDFTextStripper().apply {
-                                startPage = 1
-                                endPage   = minOf(20, doc.numberOfPages)
+                            val totalPages = minOf(doc.numberOfPages, MAX_PDF_PAGES)
+                            val sb = StringBuilder()
+                            val stripper = PDFTextStripper()
+                            // Walk page-by-page (rather than one getText() call over
+                            // the whole range) so we can insert page markers — this
+                            // is what lets the AI answer "what's on page 12?" and
+                            // keeps page order explicit and preserved.
+                            for (page in 1..totalPages) {
+                                stripper.startPage = page
+                                stripper.endPage = page
+                                val pageText = stripper.getText(doc).trim()
+                                sb.append("\n\n--- Page ").append(page).append(" ---\n")
+                                sb.append(pageText)
+                                if (sb.length > MAX_PDF_CHARS) break
+                                // Surface coarse progress for very long documents.
+                                if (page % 10 == 0) {
+                                    val frac = 0.2f + 0.3f * (page.toFloat() / totalPages)
+                                    _uiState.update { s ->
+                                        s.copy(attachment = s.attachment?.copy(extractionProgress = frac))
+                                    }
+                                }
                             }
-                            stripper.getText(doc)
+                            sb.toString()
                         }
                     }
                 }.getOrNull()
@@ -174,7 +219,7 @@ class AiChatViewModel @Inject constructor(
                 _uiState.update { state ->
                     if (state.attachment?.displayName == fileName && state.attachment.type == "file") {
                         state.copy(attachment = state.attachment.copy(
-                            pdfText = cleanText.take(15_000),
+                            pdfText = cleanText.take(MAX_PDF_CHARS),
                             isExtracting = false,
                             extractionProgress = 1f
                         ))
@@ -244,53 +289,91 @@ class AiChatViewModel @Inject constructor(
         }
     }
 
+    /** Clears only the pending (not-yet-sent) attachment picked by the user. */
     fun clearAttachment() {
         _uiState.update { it.copy(attachment = null) }
     }
 
+    /**
+     * Detaches the document that's been persisting across the conversation.
+     * Subsequent questions will no longer include its content.
+     */
+    fun clearActiveDocument() {
+        _uiState.update { it.copy(activeDocument = null) }
+    }
+
     fun sendMessage() {
         val text = _uiState.value.inputText.trim()
-        val attachment = _uiState.value.attachment
-        if ((text.isBlank() && attachment == null) || _uiState.value.isSending) return
-        if (attachment?.type == "file" && attachment.isExtracting) {
+        val pendingAttachment = _uiState.value.attachment
+        if ((text.isBlank() && pendingAttachment == null) || _uiState.value.isSending) return
+        if (pendingAttachment?.type == "file" && pendingAttachment.isExtracting) {
             _uiState.update { it.copy(error = "Still extracting text from the PDF — please wait a moment.") }
             return
         }
 
         val displayText = text.ifBlank {
-            when (attachment?.type) {
+            when (pendingAttachment?.type) {
                 "image" -> "What's in this image?"
                 else -> "Tell me about this document."
             }
         }
 
-        val userMsg = ChatMessage(
-            role = "user",
-            content = displayText,
-            attachmentName = attachment?.displayName,
-            attachmentType = attachment?.type,
-            imagePreviewUri = attachment?.previewUri
-        )
+        dispatchTurn(PendingTurn(displayText, pendingAttachment))
+    }
 
+    /** Resend the last turn that failed (e.g. due to a network error). */
+    fun retryLastMessage() {
+        val turn = _uiState.value.lastFailedTurn ?: return
+        _uiState.update { it.copy(lastFailedTurn = null, error = null) }
+        dispatchTurn(turn, isRetry = true)
+    }
+
+    fun dismissError() {
+        _uiState.update { it.copy(error = null, lastFailedTurn = null) }
+    }
+
+    private fun dispatchTurn(turn: PendingTurn, isRetry: Boolean = false) {
+        val pendingAttachment = turn.attachment
         val sessionId = _uiState.value.sessionId
+        // A newly-attached PDF becomes the document that's active for the
+        // rest of the conversation. A follow-up question with no new
+        // attachment reuses the already-active document instead of dropping
+        // its context — this is what lets "what's on page 12?" work without
+        // re-uploading, and avoids re-parsing the file every question.
+        val activeDocument = if (pendingAttachment?.type == "file")
+            pendingAttachment
+        else
+            _uiState.value.activeDocument
 
-        _uiState.update { state ->
-            state.copy(
-                messages = state.messages + userMsg,
-                inputText = "",
-                attachment = null,
-                isSending = true,
-                error = null
+        if (!isRetry) {
+            val userMsg = ChatMessage(
+                role = "user",
+                content = turn.displayText,
+                attachmentName = pendingAttachment?.displayName,
+                attachmentType = pendingAttachment?.type,
+                imagePreviewUri = pendingAttachment?.previewUri
             )
+            _uiState.update { state ->
+                state.copy(
+                    messages = state.messages + userMsg,
+                    inputText = "",
+                    attachment = null,
+                    activeDocument = if (pendingAttachment?.type == "file") pendingAttachment else state.activeDocument,
+                    isSending = true,
+                    error = null
+                )
+            }
+            persistMessage(sessionId, userMsg)
+        } else {
+            _uiState.update { it.copy(isSending = true, error = null) }
         }
-        persistMessage(sessionId, userMsg)
 
         viewModelScope.launch {
             val result = aiRepository.sendMessage(
-                message = displayText,
+                message = turn.displayText,
                 sessionId = sessionId,
-                imageBase64 = attachment?.imageBase64,
-                pdfText = attachment?.pdfText
+                imageBase64 = pendingAttachment?.imageBase64,
+                pdfText = activeDocument?.pdfText
             )
             result.onSuccess { reply ->
                 val assistantMsg = ChatMessage(role = "assistant", content = reply.reply)
@@ -300,7 +383,11 @@ class AiChatViewModel @Inject constructor(
                 persistMessage(sessionId, assistantMsg)
             }.onFailure { e ->
                 _uiState.update { state ->
-                    state.copy(isSending = false, error = e.message)
+                    state.copy(
+                        isSending = false,
+                        error = e.message ?: "Something went wrong. Please try again.",
+                        lastFailedTurn = turn
+                    )
                 }
             }
         }

@@ -124,24 +124,39 @@ fun AiChatScreen(
             )
         },
         bottomBar = {
-            MessageInputBar(
-                text = uiState.inputText,
-                onTextChange = viewModel::onInputChange,
-                onSend = {
-                    viewModel.sendMessage()
-                    scope.launch {
-                        if (uiState.messages.isNotEmpty()) {
-                            listState.animateScrollToItem(uiState.messages.lastIndex)
+            Column {
+                if (uiState.error != null) {
+                    ErrorBanner(
+                        message = uiState.error!!,
+                        canRetry = uiState.lastFailedTurn != null,
+                        onRetry = viewModel::retryLastMessage,
+                        onDismiss = viewModel::dismissError
+                    )
+                }
+                if (uiState.messages.isNotEmpty() && !uiState.isSending) {
+                    QuickActionChips(onPick = viewModel::onInputChange)
+                }
+                MessageInputBar(
+                    text = uiState.inputText,
+                    onTextChange = viewModel::onInputChange,
+                    onSend = {
+                        viewModel.sendMessage()
+                        scope.launch {
+                            if (uiState.messages.isNotEmpty()) {
+                                listState.animateScrollToItem(uiState.messages.lastIndex)
+                            }
                         }
-                    }
-                },
-                onPickImage = { imagePickerLauncher.launch("image/*") },
-                onPickFile = { filePickerLauncher.launch("*/*") },
-                isSending = uiState.isSending,
-                isEnabled = !uiState.isSending,
-                attachment = uiState.attachment,
-                onClearAttachment = viewModel::clearAttachment
-            )
+                    },
+                    onPickImage = { imagePickerLauncher.launch("image/*") },
+                    onPickFile = { filePickerLauncher.launch("*/*") },
+                    isSending = uiState.isSending,
+                    isEnabled = !uiState.isSending,
+                    attachment = uiState.attachment,
+                    onClearAttachment = viewModel::clearAttachment,
+                    activeDocument = uiState.activeDocument,
+                    onClearActiveDocument = viewModel::clearActiveDocument
+                )
+            }
         },
         contentWindowInsets = WindowInsets(0)
     ) { padding ->
@@ -169,6 +184,62 @@ fun AiChatScreen(
             }
         }
     }
+}
+
+// Renders a message body, splitting out fenced ```code``` blocks into their
+// own monospace surfaces (rest of the text still goes through the inline
+// Markdown formatter).
+@Composable
+private fun MessageContent(text: String, color: Color) {
+    val parts = remember(text) { splitCodeBlocks(text) }
+    Column {
+        parts.forEachIndexed { i, part ->
+            if (part.isCode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = if (i > 0) 6.dp else 0.dp, bottom = 2.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.85f))
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = part.text,
+                        color = Color(0xFFE0E0E0),
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
+                        lineHeight = 18.sp
+                    )
+                }
+            } else if (part.text.isNotBlank()) {
+                Text(
+                    text = formatMarkdown(part.text),
+                    color = color,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 22.sp
+                )
+            }
+        }
+    }
+}
+
+private data class MessagePart(val text: String, val isCode: Boolean)
+
+private fun splitCodeBlocks(text: String): List<MessagePart> {
+    val regex = Regex("```[a-zA-Z0-9]*\\n?([\\s\\S]*?)```")
+    val parts = mutableListOf<MessagePart>()
+    var lastIndex = 0
+    for (match in regex.findAll(text)) {
+        if (match.range.first > lastIndex) {
+            parts.add(MessagePart(text.substring(lastIndex, match.range.first), isCode = false))
+        }
+        parts.add(MessagePart(match.groupValues[1].trimEnd('\n'), isCode = true))
+        lastIndex = match.range.last + 1
+    }
+    if (lastIndex < text.length) {
+        parts.add(MessagePart(text.substring(lastIndex), isCode = false))
+    }
+    return if (parts.isEmpty()) listOf(MessagePart(text, isCode = false)) else parts
 }
 
 // Lightweight Markdown renderer
@@ -239,6 +310,11 @@ private fun formatMarkdown(text: String): androidx.compose.ui.text.AnnotatedStri
             if (i != lines.lastIndex) append("\n")
         }
     }
+}
+
+private fun formatTimestamp(epochMillis: Long): String {
+    val fmt = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+    return fmt.format(java.util.Date(epochMillis))
 }
 
 private fun getFileName(resolver: ContentResolver, uri: Uri): String? {
@@ -347,14 +423,18 @@ private fun ChatBubble(message: ChatMessage) {
                     )
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
-                Text(
-                    text = formatMarkdown(message.content),
+                MessageContent(
+                    text = message.content,
                     color = if (isUser) Color.White
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    lineHeight = 22.sp
+                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Text(
+                text = formatTimestamp(message.createdAt),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp)
+            )
         }
 
         if (isUser) {
@@ -442,6 +522,69 @@ private fun ThinkingBubble() {
 }
 
 @Composable
+private fun ErrorBanner(
+    message: String,
+    canRetry: Boolean,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Surface(color = MaterialTheme.colorScheme.errorContainer) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(Icons.Filled.ErrorOutline, null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onErrorContainer)
+            Text(
+                message,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (canRetry) {
+                TextButton(onClick = onRetry) { Text("Retry") }
+            }
+            IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Filled.Close, "Dismiss",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onErrorContainer)
+            }
+        }
+    }
+}
+
+private val QUICK_ACTIONS = listOf(
+    "Summarize this topic" to "Summarize the key points of ",
+    "Explain simply" to "Explain this in simple terms: ",
+    "Generate MCQs" to "Generate 5 practice MCQs about ",
+    "Study plan" to "Create a study plan for ",
+    "Exam tips" to "Give me exam tips for "
+)
+
+@Composable
+private fun QuickActionChips(onPick: (String) -> Unit) {
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(QUICK_ACTIONS) { (label, prefix) ->
+            AssistChip(
+                onClick = { onPick(prefix) },
+                label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+            )
+        }
+    }
+}
+
+@Composable
 private fun MessageInputBar(
     text: String,
     onTextChange: (String) -> Unit,
@@ -451,7 +594,9 @@ private fun MessageInputBar(
     isSending: Boolean,
     isEnabled: Boolean,
     attachment: com.oalevel.resources.ui.viewmodel.AiAttachment?,
-    onClearAttachment: () -> Unit
+    onClearAttachment: () -> Unit,
+    activeDocument: com.oalevel.resources.ui.viewmodel.AiAttachment? = null,
+    onClearActiveDocument: () -> Unit = {}
 ) {
     Surface(
         tonalElevation = 4.dp,
@@ -462,6 +607,35 @@ private fun MessageInputBar(
                 .fillMaxWidth()
                 .imePadding()
         ) {
+            // ── Active document banner (persists across the conversation) ─────
+            if (attachment == null && activeDocument?.type == "file" && activeDocument.pdfText != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(Icons.Filled.PictureAsPdf, null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(
+                        "\"${activeDocument.displayName}\" is attached to this conversation",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    IconButton(onClick = onClearActiveDocument, modifier = Modifier.size(22.dp)) {
+                        Icon(Icons.Filled.Close, "Detach document",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
+                }
+            }
+
             // ── Attachment preview strip ──────────────────────────────────────
             if (attachment != null) {
                 Row(
