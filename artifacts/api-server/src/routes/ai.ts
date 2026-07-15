@@ -3,7 +3,13 @@ import { v4 as uuidv4 } from "uuid";
 import { pool } from "../db/index";
 import { requireAuth } from "../middlewares/auth";
 import { sendAiMessage, getAvailableModels } from "../lib/ai";
-import { searchKnowledge, searchResourceTitles, logAiSearch } from "../lib/knowledge";
+import {
+  searchKnowledge,
+  searchResourceTitles,
+  searchMcqResources,
+  categorizeResourceName,
+  logAiSearch,
+} from "../lib/knowledge";
 import { getConfig } from "../lib/config";
 import { dbLog } from "../lib/dbLogger";
 
@@ -171,16 +177,19 @@ router.post("/ai/chat", async (req, res) => {
 
   try {
     // ── Search knowledge index before calling the AI ──────────────────────
-    // Two independent lookups: content search (finds relevant passages) and
+    // Three independent lookups: content search (finds relevant passages),
     // title search (finds resources that exist even if their content wasn't
-    // a close text match) — together these let the AI answer "do you have
-    // X?" style questions from the real resource catalog instead of saying
-    // "I don't know".
-    const [knowledgeResults, titleMatches] = await Promise.all([
+    // a close text match), and — only when the student is asking for MCQs —
+    // an MCQ-specific search restricted to Topical/MCQ-named resources
+    // (Smart MCQ Mode: prefer real indexed MCQs over generating new ones).
+    const isMcqRequest = /\b(mcq|mcqs|multiple[\s-]?choice|practice questions?)\b/i.test(message);
+
+    const [knowledgeResults, titleMatches, mcqResults] = await Promise.all([
       searchKnowledge(message, 5),
       searchResourceTitles(message),
+      isMcqRequest ? searchMcqResources(message, 8) : Promise.resolve([]),
     ]);
-    const relatedResources = knowledgeResults.map((r) => ({
+    const relatedResources = [...mcqResults, ...knowledgeResults].map((r) => ({
       resourceId: r.resourceId,
       resourceName: r.resourceName,
     }));
@@ -189,19 +198,35 @@ router.post("/ai/chat", async (req, res) => {
     if (titleMatches.length > 0) {
       contextParts.push(
         `AVAILABLE RESOURCE TITLES (these documents exist in the app; mention them by name if relevant to the question, even if you don't have their full content below):\n` +
-          titleMatches.map((t) => `- ${t.name}`).join("\n")
+          titleMatches
+            .map((t) => `- ${t.name} [${categorizeResourceName(t.name)}]`)
+            .join("\n")
       );
+    }
+    if (isMcqRequest) {
+      if (mcqResults.length > 0) {
+        contextParts.push(
+          `SMART MCQ MODE — REAL INDEXED MCQs FOUND for this topic (use these FIRST, quoting/adapting the actual questions; only generate new practice MCQs if these are insufficient in number):\n` +
+            mcqResults
+              .map((r, i) => `[Real MCQ Source ${i + 1}: ${r.resourceName} — ${categorizeResourceName(r.resourceName)}]\n${r.content}`)
+              .join("\n\n---\n\n")
+        );
+      } else {
+        contextParts.push(
+          "SMART MCQ MODE — no matching indexed MCQ resource was found for this topic. Tell the student you couldn't find existing Cambridge MCQs on this exact topic in the library, then generate new practice MCQs yourself."
+        );
+      }
     }
     if (knowledgeResults.length > 0) {
       contextParts.push(
         knowledgeResults
-          .map((r, i) => `[Resource ${i + 1}: ${r.resourceName}]\n${r.content}`)
+          .map((r, i) => `[Resource ${i + 1}: ${r.resourceName} — ${categorizeResourceName(r.resourceName)}]\n${r.content}`)
           .join("\n\n---\n\n")
       );
     }
     const knowledgeContext = contextParts.length > 0 ? contextParts.join("\n\n===\n\n") : undefined;
 
-    logAiSearch(message, knowledgeResults.length, relatedResources.map((r) => r.resourceName));
+    logAiSearch(message, knowledgeResults.length + mcqResults.length, relatedResources.map((r) => r.resourceName));
 
     const result = await sendAiMessage(messages, model, imageBase64, boundedPdfText, knowledgeContext, boundedImageMimeType);
 

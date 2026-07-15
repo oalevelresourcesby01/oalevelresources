@@ -392,6 +392,86 @@ async function expandWithNeighborChunks(
   );
 }
 
+// ── Resource categorization (Notes / Past Paper / Mark Scheme / Topical-MCQ / Examiner Report) ──
+//
+// The `resources` table only distinguishes 'folder' vs 'pdf' — there is no
+// dedicated category column. Cambridge resource filenames follow fairly
+// consistent naming conventions (e.g. "...Mark Scheme...", "...Topical MCQs...",
+// "...Examiner Report..."), so we infer a human-readable category from the
+// name. This is used to label context passed to the AI so it can structure
+// answers with real Notes/Past Paper/Mark Scheme/MCQ/Examiner Report sections
+// instead of a flat, uncategorized list.
+export type ResourceCategory =
+  | "Mark Scheme"
+  | "Examiner Report"
+  | "Topical / MCQ"
+  | "Past Paper"
+  | "Syllabus"
+  | "Notes";
+
+export function categorizeResourceName(name: string): ResourceCategory {
+  const n = name.toLowerCase();
+  if (/(mark\s*scheme|\bms\b|marking\s*scheme)/.test(n)) return "Mark Scheme";
+  if (/(examiner('s)?\s*report|\ber\b)/.test(n)) return "Examiner Report";
+  if (/(mcq|multiple[\s-]?choice|topical)/.test(n)) return "Topical / MCQ";
+  if (/(syllabus|specification)/.test(n)) return "Syllabus";
+  if (/(past\s*paper|question\s*paper|\bqp\b|specimen)/.test(n)) return "Past Paper";
+  return "Notes";
+}
+
+// ── MCQ-specific search (Smart MCQ Mode) ────────────────────────────────────────
+//
+// When a student asks the AI to "generate MCQs", we must first look for real
+// Cambridge MCQs already indexed in the app (Topical/MCQ-named resources)
+// before generating anything new. This restricts the full-text search to
+// resources whose name matches the MCQ/topical naming convention.
+export async function searchMcqResources(
+  query: string,
+  limit = 8
+): Promise<KnowledgeSearchResult[]> {
+  if (!query || query.trim().length < 2) return [];
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT kc.resource_id, kc.resource_name, kc.chunk_index, kc.content,
+         ts_rank(kc.content_tsv, plainto_tsquery('english', $1)) AS rank
+       FROM knowledge_chunks kc
+       JOIN resources r ON r.id = kc.resource_id
+       WHERE kc.content_tsv @@ plainto_tsquery('english', $1)
+         AND r.name ~* '(mcq|multiple[- ]?choice|topical)'
+       ORDER BY rank DESC
+       LIMIT $2`,
+      [query.trim(), limit * 5]
+    );
+
+    const MAX_CHUNKS_PER_RESOURCE = 4;
+    const byResource = new Map<string, KnowledgeSearchResult[]>();
+    for (const row of rows) {
+      const existing = byResource.get(row.resource_id) ?? [];
+      if (existing.length < MAX_CHUNKS_PER_RESOURCE) {
+        byResource.set(row.resource_id, [
+          ...existing,
+          {
+            resourceId: row.resource_id,
+            resourceName: row.resource_name,
+            chunkIndex: row.chunk_index,
+            content: row.content,
+            score: parseFloat(row.rank),
+          },
+        ]);
+      }
+      if (byResource.size >= limit) break;
+    }
+
+    return Array.from(byResource.values()).flatMap((chunks) =>
+      chunks.sort((a, b) => a.chunkIndex - b.chunkIndex)
+    );
+  } catch (err) {
+    dbLog("warn", "MCQ resource search failed", String(err));
+    return [];
+  }
+}
+
 // ── Resource title search (for "do you have X?" style questions) ──────────────
 //
 // Content search (`searchKnowledge`) only matches chunks whose *text* is

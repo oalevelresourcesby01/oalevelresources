@@ -92,11 +92,14 @@ fun AiChatScreen(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+                                .background(Brush.linearGradient(listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary
+                                ))),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Filled.SmartToy, null,
-                                modifier = Modifier.size(20.dp), tint = Color.White)
+                                modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onPrimary)
                         }
                         Column {
                             Text(
@@ -154,7 +157,9 @@ fun AiChatScreen(
                     attachment = uiState.attachment,
                     onClearAttachment = viewModel::clearAttachment,
                     activeDocument = uiState.activeDocument,
-                    onClearActiveDocument = viewModel::clearActiveDocument
+                    onClearActiveDocument = viewModel::clearActiveDocument,
+                    activeImage = uiState.activeImage,
+                    onClearActiveImage = viewModel::clearActiveImage
                 )
             }
         },
@@ -341,11 +346,14 @@ private fun ChatBubble(message: ChatMessage) {
                 modifier = Modifier
                     .size(30.dp)
                     .clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+                    .background(Brush.linearGradient(listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.tertiary
+                    ))),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Filled.SmartToy, null,
-                    modifier = Modifier.size(16.dp), tint = Color.White)
+                    modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
             }
             Spacer(Modifier.width(6.dp))
         }
@@ -490,11 +498,14 @@ private fun ThinkingBubble() {
             modifier = Modifier
                 .size(30.dp)
                 .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+                .background(Brush.linearGradient(listOf(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.tertiary
+                ))),
             contentAlignment = Alignment.Center
         ) {
             Icon(Icons.Filled.SmartToy, null,
-                modifier = Modifier.size(16.dp), tint = Color.White)
+                modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
         }
         Box(
             modifier = Modifier
@@ -596,7 +607,9 @@ private fun MessageInputBar(
     attachment: com.oalevel.resources.ui.viewmodel.AiAttachment?,
     onClearAttachment: () -> Unit,
     activeDocument: com.oalevel.resources.ui.viewmodel.AiAttachment? = null,
-    onClearActiveDocument: () -> Unit = {}
+    onClearActiveDocument: () -> Unit = {},
+    activeImage: com.oalevel.resources.ui.viewmodel.AiAttachment? = null,
+    onClearActiveImage: () -> Unit = {}
 ) {
     Surface(
         tonalElevation = 4.dp,
@@ -632,6 +645,35 @@ private fun MessageInputBar(
                         Icon(Icons.Filled.Close, "Detach document",
                             modifier = Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
+                }
+            }
+
+            // ── Active image banner (persists across the conversation) ────────
+            if (attachment == null && activeImage?.type == "image" && activeImage.imageBase64 != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(Icons.Filled.Image, null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                    Text(
+                        "\"${activeImage.displayName}\" is attached to this conversation",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    IconButton(onClick = onClearActiveImage, modifier = Modifier.size(22.dp)) {
+                        Icon(Icons.Filled.Close, "Detach image",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer)
                     }
                 }
             }
@@ -799,11 +841,14 @@ private fun AiWelcomeScreen(
                 .size(80.dp)
                 .shadow(8.dp, CircleShape)
                 .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Color(0xFF7E57C2), Color(0xFF4527A0)))),
+                .background(Brush.linearGradient(listOf(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.tertiary
+                ))),
             contentAlignment = Alignment.Center
         ) {
             Icon(Icons.Filled.SmartToy, null,
-                modifier = Modifier.size(44.dp), tint = Color.White)
+                modifier = Modifier.size(44.dp), tint = MaterialTheme.colorScheme.onPrimary)
         }
         Spacer(Modifier.height(20.dp))
         Text(

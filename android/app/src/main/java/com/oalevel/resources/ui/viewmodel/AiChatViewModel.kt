@@ -51,6 +51,11 @@ data class AiChatUiState(
     // "what's on page 12?" don't require re-uploading the file, and the PDF
     // is only ever parsed once rather than on every question.
     val activeDocument: AiAttachment? = null,
+    // Same idea as [activeDocument] but for the last attached image — per
+    // product spec, images should "remain available during the current
+    // conversation" (diagrams, handwritten notes, graphs, etc.), not just
+    // for the single turn they were attached on.
+    val activeImage: AiAttachment? = null,
     // The last user turn (text + attachment) that failed to send, kept so
     // the UI can offer a one-tap "Retry" action instead of forcing retyping.
     val lastFailedTurn: PendingTurn? = null
@@ -302,6 +307,14 @@ class AiChatViewModel @Inject constructor(
         _uiState.update { it.copy(activeDocument = null) }
     }
 
+    /**
+     * Detaches the image that's been persisting across the conversation.
+     * Subsequent questions will no longer include it.
+     */
+    fun clearActiveImage() {
+        _uiState.update { it.copy(activeImage = null) }
+    }
+
     fun sendMessage() {
         val text = _uiState.value.inputText.trim()
         val pendingAttachment = _uiState.value.attachment
@@ -344,6 +357,14 @@ class AiChatViewModel @Inject constructor(
             pendingAttachment
         else
             _uiState.value.activeDocument
+        // Same persistence for images: a freshly-attached image becomes the
+        // "active image" for the rest of the conversation, so follow-up
+        // questions ("what's the second step in this diagram?") keep seeing
+        // it without the student re-attaching it every turn.
+        val activeImage = if (pendingAttachment?.type == "image")
+            pendingAttachment
+        else
+            _uiState.value.activeImage
 
         if (!isRetry) {
             val userMsg = ChatMessage(
@@ -359,6 +380,7 @@ class AiChatViewModel @Inject constructor(
                     inputText = "",
                     attachment = null,
                     activeDocument = if (pendingAttachment?.type == "file") pendingAttachment else state.activeDocument,
+                    activeImage = if (pendingAttachment?.type == "image") pendingAttachment else state.activeImage,
                     isSending = true,
                     error = null
                 )
@@ -372,7 +394,7 @@ class AiChatViewModel @Inject constructor(
             val result = aiRepository.sendMessage(
                 message = turn.displayText,
                 sessionId = sessionId,
-                imageBase64 = pendingAttachment?.imageBase64,
+                imageBase64 = activeImage?.imageBase64,
                 pdfText = activeDocument?.pdfText
             )
             result.onSuccess { reply ->

@@ -78,17 +78,45 @@ export async function sendAiMessage(
   }
 
   // Explicit source priority — the AI must never jump straight to general
-  // knowledge. Order: 1) the document the user just uploaded, 2) the app's
-  // indexed PDF library (which includes everything synced from Drive),
-  // 3) general knowledge only as a last resort.
+  // knowledge. Six-level order per product spec: uploaded document, then
+  // any image attached to this conversation, then the app's own indexed
+  // library (which already covers everything synced from Google Drive —
+  // there is no separate Drive-only source), then general Cambridge
+  // syllabus knowledge, and only finally unconstrained general knowledge.
   allMessages.push({
     role: "system",
     content:
-      "When answering, use this priority order for information sources: " +
+      "You are an expert Cambridge tutor for O Level, IGCSE, AS Level and A Level students — not a general-purpose chatbot. " +
+      "You understand subjects, syllabuses, chapters, past papers, topicals, mark schemes, examiner reports, notes and MCQs. " +
+      "When answering, use this strict priority order for information sources, and never skip a level to jump straight to general knowledge if a higher level could contain the answer: " +
       "(1) the CURRENT UPLOADED DOCUMENT attached to this message, if any — treat it as ground truth for questions about it; " +
-      "(2) the app's indexed resource library (shown below as RELEVANT EDUCATIONAL RESOURCES / AVAILABLE RESOURCE TITLES) — this covers every PDF already stored in the app, including ones synced from Google Drive; " +
-      "(3) only fall back to your own general knowledge if neither source has the answer. " +
-      "If multiple indexed resources are relevant, combine information from all of them. Whenever you use an indexed resource or the uploaded document, mention its title/name in your answer.",
+      "(2) any image attached to this conversation (diagrams, handwritten notes, tables, graphs, chemistry/biology diagrams, physics graphs, worked math) — read it fully before answering; " +
+      "(3) the app's indexed local knowledge base (shown below as RELEVANT EDUCATIONAL RESOURCES / AVAILABLE RESOURCE TITLES) — this already includes every PDF synced from Google Drive, so it covers both the local index and Drive-sourced resources; " +
+      "(4) general Cambridge syllabus knowledge (official topic structure, command words, assessment objectives) when no indexed resource covers the question; " +
+      "(5) your own general knowledge only as the absolute last resort. " +
+      "If multiple indexed resources are relevant, combine information from all of them. Whenever you use an indexed resource or the uploaded document, mention its title/name in your answer. Never answer \"I don't know\" about whether a resource exists if it appears in AVAILABLE RESOURCE TITLES.",
+  });
+
+  // Smart MCQ Mode — when a student asks the AI to "generate MCQs", it must
+  // not immediately invent new questions. It should first surface any real
+  // Cambridge MCQs already found in the indexed library (see SMART MCQ MODE
+  // context block below, populated by the route handler) and only generate
+  // new practice questions if there aren't enough real ones for the topic.
+  allMessages.push({
+    role: "system",
+    content:
+      "If the student asks you to generate MCQs or practice questions, check the context below for a 'SMART MCQ MODE' section first. " +
+      "If real indexed MCQs were found, present those real questions first (citing Subject, Topic, Paper, Session and Question Number when available in the source), and only generate additional new MCQs afterward if there weren't enough real ones. " +
+      "Never silently skip straight to generating new questions when real ones exist in the library.",
+  });
+
+  // Structured educational answers — every substantive academic answer
+  // should read like a study assistant's briefing, not a one-line chatbot
+  // reply: explanation plus pointers to the relevant real resources.
+  allMessages.push({
+    role: "system",
+    content:
+      "For substantive academic questions (not small talk or clarifying questions), structure your answer to include, where the information is available from the context below or the conversation: a clear Explanation, the Related Topic, Recommended Notes, Relevant Past Papers, Relevant Topical MCQs, Relevant Mark Scheme, and — if available — the Related Examiner Report. Only include sections you actually have real information for; do not invent resource names that weren't given to you in context. Keep this structure lightweight for simple/short questions.",
   });
 
   // Inject knowledge context as a system message so the model sees it before user messages

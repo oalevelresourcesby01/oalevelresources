@@ -1,0 +1,276 @@
+Continue working on the existing project.
+
+IMPORTANT:
+
+This task is ONLY for improving the AI Assistant.
+
+Do NOT modify unrelated screens.
+
+Do NOT redesign Home, Browse, Search, Dashboard or Settings.
+
+Do NOT remove existing features.
+
+Do NOT break the current application.
+
+Build after major changes.
+
+Fix all compilation errors before finishing.
+
+Commit and push to GitHub.
+
+-------------------------------------------------------
+PHASE 1 — MAKE THE AI A TRUE CAMBRIDGE STUDY ASSISTANT
+-------------------------------------------------------
+
+The AI should NOT behave like a general chatbot.
+
+It should behave like an expert tutor for:
+
+• Cambridge O Level
+• Cambridge IGCSE
+• Cambridge AS Level
+• Cambridge A Level
+
+The AI should understand:
+
+• Subjects
+• Syllabuses
+• Chapters
+• Past Papers
+• Topicals
+• Mark Schemes
+• Examiner Reports
+• Notes
+• MCQs
+
+The AI's first priority must ALWAYS be educational resources inside this application.
+
+General knowledge should only be used as the final fallback.
+
+-------------------------------------------------------
+PHASE 2 — RESOURCE PRIORITY (VERY IMPORTANT)
+-------------------------------------------------------
+
+Whenever a student asks any question, use this priority order.
+
+Priority 1
+
+Current uploaded PDF
+
+Priority 2
+
+Current conversation uploaded images
+
+Priority 3
+
+All indexed PDFs inside the application's local knowledge base
+
+Priority 4
+
+Google Drive indexed educational resources
+
+Priority 5
+
+General Cambridge syllabus knowledge
+
+Priority 6
+
+General AI knowledge
+
+Never skip local resources.
+
+Never immediately answer from general AI knowledge if the answer exists inside local resources.
+
+-------------------------------------------------------
+PHASE 3 — FULL PDF UNDERSTANDING
+-------------------------------------------------------
+
+The AI currently reads only part of uploaded PDFs.
+
+Improve the parser and retrieval system.
+
+Requirements:
+
+• Read EVERY page.
+• Parse the complete document.
+• Never stop at page 1.
+• Never answer using only OCR from the first page.
+• Support 300+ page PDFs.
+• Preserve page order.
+• Retrieve neighbouring pages when required.
+• Cache parsed documents during the active chat session.
+• The uploaded document should remain available until the conversation ends.
+
+If the user asks:
+
+"What is on page 97?"
+
+The AI should retrieve page 97 and surrounding pages before answering.
+
+-------------------------------------------------------
+PHASE 4 — IMAGE UNDERSTANDING
+-------------------------------------------------------
+
+The AI should fully understand uploaded images.
+
+Support:
+
+• Diagrams
+• Handwritten notes
+• Tables
+• Graphs
+• Screenshots
+• Chemistry structures
+• Biology diagrams
+• Physics graphs
+• Mathematical working
+
+Images should remain available during the current conversation.
+
+-------------------------------------------------------
+PHASE 5 — BETTER RESOURCE DISCOVERY
+-------------------------------------------------------
+
+The AI should know every indexed educational resource.
+
+Examples:
+
+"Do you have Atomic Structure notes?"
+
+"Do you have Biology ATP?"
+
+"Show Physics topical papers."
+
+"Where are Chemistry MCQs?"
+
+The AI should search the application's indexed resource database first.
+
+It should never answer "I don't know" if those resources exist.
+
+-------------------------------------------------------
+PHASE 6 — SMART MCQ MODE
+-------------------------------------------------------
+
+When the student asks:
+
+"Generate MCQs"
+
+DO NOT immediately generate new questions.
+
+Instead follow this workflow:
+
+Step 1
+
+Search the application's indexed PDFs.
+
+Step 2
+
+Find existing Cambridge MCQs related to the requested topic.
+
+Step 3
+
+Return those real MCQs with:
+
+• Subject
+• Topic
+• Paper
+• Session
+• Question Number
+• Page Number (if available)
+
+Step 4
+
+If there are not enough existing MCQs,
+
+ONLY THEN generate additional practice MCQs.
+
+The AI should always prefer real educational resources before generating new content.
+
+-------------------------------------------------------
+PHASE 7 — BETTER ANSWERS
+-------------------------------------------------------
+
+Every educational answer should include:
+
+Explanation
+
+Related Topic
+
+Recommended Notes
+
+Relevant Past Papers
+
+Relevant Topical MCQs
+
+Relevant Mark Scheme
+
+Related Examiner Report (if available)
+
+This should feel like a complete study assistant rather than a normal chatbot.
+
+-------------------------------------------------------
+PHASE 8 — AI CHAT UI
+-------------------------------------------------------
+
+Improve the AI Chat appearance.
+
+Keep Material 3.
+
+Improve:
+
+• Message bubbles
+• Better spacing
+• Better timestamps
+• Typing animation
+• Loading animation
+• Suggested questions
+• Better markdown
+• Better scrolling
+• Better empty state
+
+-------------------------------------------------------
+PHASE 9 — APP THEME INTEGRATION
+-------------------------------------------------------
+
+The AI Assistant currently uses a purple logo.
+
+This does not match the application's design language.
+
+Replace the purple AI assistant branding with colors derived from the application's Material 3 theme.
+
+Requirements:
+
+• Use MaterialTheme.colorScheme.
+• The AI icon should automatically adapt to Light Mode and Dark Mode.
+• Primary, Secondary or Tertiary container colours may be used.
+• Do NOT use hardcoded purple.
+• Keep the same icon shape.
+• Match the rest of the application's green design language.
+
+The AI Assistant should look like a natural part of the application instead of a separate chatbot.
+
+-------------------------------------------------------
+FINAL STEP
+-------------------------------------------------------
+
+Build the Android Debug APK.
+
+Fix every compilation error.
+
+Fix runtime crashes.
+
+Verify:
+
+• PDF understanding
+• Image understanding
+• Conversation memory
+• Local resource search
+• MCQ retrieval
+• Theme colours
+• AI Chat UI
+
+Commit changes.
+
+Push to GitHub.
+
+Only finish after everything compiles successfully.
